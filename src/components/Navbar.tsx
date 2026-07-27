@@ -73,6 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const navbarRightRef = useRef<HTMLDivElement>(null);
@@ -259,17 +260,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </li>
 
-            {/* Analytics */}
-            <li className="navbar-item">
-              <a 
-                href="#analytics" 
-                className={`navbar-link ${activeSubTab === 'analytics' ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'analytics'); }}
-              >
-                Analytics
-              </a>
-            </li>
-
             {/* Company */}
             <li className="navbar-item">
               <a 
@@ -283,73 +273,41 @@ export const Navbar: React.FC<NavbarProps> = ({
           </ul>
         </div>
 
-        {/* Center column: Candidate Search bar */}
-        <div className="navbar-search-container" ref={searchRef}>
-          <div className="navbar-search-wrapper" style={{ minWidth: '320px' }}>
-            <input 
-              type="text"
-              className="navbar-search-input"
-              placeholder="Search candidates, skills or job titles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button 
-                type="button"
-                className="navbar-search-clear"
-                onClick={() => setSearchQuery('')}
-                title="Clear search"
-              >
-                <X size={14} />
-              </button>
-            )}
-            <button 
-              className="navbar-search-btn"
-              onClick={() => alert(`Searching for: ${searchQuery}`)}
-              title="Search"
-              style={{ background: '#0284c7' }}
-            >
-              <Search size={16} color="#ffffff" />
-            </button>
-          </div>
-        </div>
-
         {/* Right column: Action controls */}
         <div className="navbar-right" ref={navbarRightRef}>
           
-          {/* Switch back to Job Seeker Portal button */}
-          <button
-            className="global-nav-btn hide-mobile"
-            style={{
-              background: 'var(--color-primary-light)',
-              color: 'var(--color-primary)',
-              borderColor: 'var(--color-primary-border)',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '99px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              marginRight: '8px',
-              border: '1px solid var(--color-primary-border)'
-            }}
-            onClick={() => handleNavClick('home')}
-          >
-            <Sparkles size={13} />
-            <span>Job Seeker Portal</span>
-          </button>
+          {/* Compact search input container */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {showSearchInput ? (
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '99px', padding: '4px 10px', background: '#f8fafc' }}>
+                <input 
+                  type="text" 
+                  placeholder="Search candidates..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '12.5px', width: '150px', color: '#1e293b' }}
+                  autoFocus
+                />
+                <button onClick={() => setShowSearchInput(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center' }}>
+                  <X size={12} color="#94a3b8" />
+                </button>
+              </div>
+            ) : (
+              <button className="icon-button" onClick={() => setShowSearchInput(true)} title="Search Candidates" style={{ width: '38px', height: '38px', borderRadius: '50%' }}>
+                <Search size={17} style={{ color: '#4b5563' }} />
+              </button>
+            )}
+          </div>
 
           {/* Messages */}
           <button 
             className="icon-button"
             onClick={() => handleNavClick('employer', 'messages')}
             title="Messages"
-            style={{ position: 'relative' }}
+            style={{ position: 'relative', width: '38px', height: '38px', borderRadius: '50%' }}
           >
             <MessageSquare size={17} style={{ color: '#4b5563' }} />
-            <span style={{ position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7' }} />
+            <span style={{ position: 'absolute', top: '4px', right: '4px', width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7' }} />
           </button>
 
           {/* Notifications Bell */}
@@ -358,12 +316,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="icon-button" 
               onClick={() => setShowNotifications(!showNotifications)}
               title="Notifications"
+              style={{ width: '38px', height: '38px', borderRadius: '50%' }}
             >
               <Bell size={17} style={{ color: '#4b5563' }} />
-              {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+              {unreadCount > 0 && <span className="notification-badge" style={{ top: '2px', right: '2px' }}>{unreadCount}</span>}
             </button>
 
-            {/* Notifications drop down panel */}
+            {/* Notifications Dropdown Panel */}
             {showNotifications && (
               <div className="notification-panel" style={{ right: 0 }}>
                 <div className="notification-header">
@@ -405,45 +364,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Language Selection */}
-          <div style={{ position: 'relative' }}>
-            <button
-              className="global-nav-btn"
-              onClick={() => setShowLangDropdown(!showLangDropdown)}
-              style={{ padding: '6px 10px', height: '36px' }}
-            >
-              <Globe size={14} />
-              <ChevronDown size={12} />
-            </button>
-
-            {showLangDropdown && (
-              <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '150px', zIndex: 1000 }}>
-                {languages.map((lang) => (
-                  <div
-                    key={lang.code}
-                    className="dropdown-item"
-                    onClick={() => {
-                      setActiveLang(lang.code);
-                      setShowLangDropdown(false);
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-                  >
-                    <span>{lang.flag}</span>
-                    <span>{lang.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Dark Mode Switch */}
-          <button 
-            className="icon-button" 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-
           {/* Employer Profile Menu Dropdown */}
           <div style={{ position: 'relative' }}>
             <button 
@@ -459,7 +379,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {showAuthDropdown && (
-              <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '200px', zIndex: 1000, padding: '8px' }}>
+              <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '220px', zIndex: 1000, padding: '8px' }}>
                 <div style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fef08a', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px' }}>
                     C
@@ -509,6 +429,51 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+
+                {/* Inline Language Selector */}
+                <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Globe size={13} />
+                    <span>Language</span>
+                  </span>
+                  <select 
+                    value={activeLang} 
+                    onChange={(e) => setActiveLang(e.target.value as LangCode)}
+                    style={{ fontSize: '11px', padding: '2px 4px', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#fff', outline: 'none' }}
+                  >
+                    <option value="en">English 🇺🇸</option>
+                    <option value="hi">हिन्दी 🇮🇳</option>
+                    <option value="ar">العربية 🇦🇪</option>
+                    <option value="es">Español 🇪🇸</option>
+                  </select>
+                </div>
+
+                {/* Inline Theme Toggle */}
+                <div 
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderRadius: '6px' }}
+                  className="dropdown-item"
+                >
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+                    <span>Appearance</span>
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#0284c7' }}>
+                    {theme === 'dark' ? 'Dark' : 'Light'}
+                  </span>
+                </div>
+
+                <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+
+                {/* Switch back to Job Seeker Portal link */}
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('home'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--color-primary)' }}
+                >
+                  <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
+                  <span>Job Seeker Portal</span>
+                </div>
 
                 <div 
                   className="dropdown-item logout-item" 
