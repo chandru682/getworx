@@ -279,13 +279,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Compact search input container */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {showSearchInput ? (
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '99px', padding: '4px 10px', background: '#f8fafc' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                border: '1px solid #cbd5e1', 
+                borderRadius: '99px', 
+                padding: '0 12px', 
+                background: '#f8fafc',
+                height: '36px',
+                boxSizing: 'border-box'
+              }}>
+                <Search size={14} color="#94a3b8" style={{ marginRight: '6px' }} />
                 <input 
                   type="text" 
                   placeholder="Search candidates..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '12.5px', width: '150px', color: '#1e293b' }}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '12.5px', width: '150px', color: '#1e293b', padding: 0, height: '100%' }}
                   autoFocus
                 />
                 <button onClick={() => setShowSearchInput(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center' }}>
