@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { FilterSidebar, type FilterState } from './components/FilterSidebar';
+import { EmployerDashboard } from './components/EmployerDashboard';
 import { JobCard, type Job } from './components/JobCard';
 import { AIInterview } from './components/AIInterview';
 import { ResumeChecker } from './components/ResumeChecker';
@@ -53,7 +54,7 @@ const initialFilterState: FilterState = {
 
 function App() {
   // Global Product States
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [activeCurrency, setActiveCurrency] = useState<CurrencyCode>('USD');
   const [activeRegion, setActiveRegion] = useState<RegionCode>('all');
   const [visaOnly, setVisaOnly] = useState(false);
@@ -673,6 +674,11 @@ function App() {
               onToggleSaveJob={handleToggleSaveJob}
             />
           </div>
+        )}
+
+        {/* View: Employer Dashboard (Recruiter Portal) */}
+        {activeTab === 'employer' && (
+          <EmployerDashboard />
         )}
 
         {/* View: Registration */}

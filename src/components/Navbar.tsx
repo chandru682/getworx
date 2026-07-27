@@ -14,7 +14,8 @@ import {
   Globe,
   Menu,
   LogOut,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 import { GetWorxsLogo } from './GetWorxsLogo';
 import { type CurrencyCode, type RegionCode } from '../utils/currency';
@@ -228,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className={`navbar-link ${activeTab === 'companies' ? 'active' : ''}`}
               onClick={(e) => { e.preventDefault(); handleNavClick('companies'); }}
             >
-              {getTranslation(activeLang, 'top_employers')}
+              {getTranslation(activeLang, 'top_companies')}
             </a>
           </li>
 
@@ -383,6 +384,30 @@ export const Navbar: React.FC<NavbarProps> = ({
           title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+
+        {/* Recruiter Switch Button */}
+        <button
+          className="global-nav-btn hide-mobile"
+          style={{
+            background: activeTab === 'employer' ? 'var(--color-accent-light)' : 'var(--color-primary-light)',
+            color: activeTab === 'employer' ? 'var(--color-accent)' : 'var(--color-primary)',
+            borderColor: activeTab === 'employer' ? 'var(--color-accent-border)' : 'var(--color-primary-border)',
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '99px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            marginRight: '8px',
+            border: '1px solid var(--color-primary-border)'
+          }}
+          onClick={() => handleNavClick(activeTab === 'employer' ? 'home' : 'employer')}
+        >
+          {activeTab === 'employer' ? <Briefcase size={14} /> : <Sparkles size={14} />}
+          <span>{activeTab === 'employer' ? 'Job Seeker Portal' : 'Employer Portal'}</span>
         </button>
 
         {/* Standalone Bell Notification Icon */}
@@ -608,6 +633,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Globe size={15} style={{ color: 'var(--text-muted)' }} />
                 <span>Global Settings</span>
+              </div>
+
+              <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+
+              {/* Employer Portal Section */}
+              <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
+                EMPLOYER PORTAL
+              </div>
+
+              <div 
+                className="dropdown-item" 
+                onClick={() => { handleNavClick('employer'); setShowAuthDropdown(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
+              >
+                <Sparkles size={15} style={{ color: 'var(--color-primary)' }} />
+                <span>Recruiter Hub</span>
               </div>
 
               <div className="dropdown-divider" style={{ margin: '6px 0' }} />
