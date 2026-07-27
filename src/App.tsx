@@ -678,7 +678,7 @@ function App() {
 
         {/* View: Employer Dashboard (Recruiter Portal) */}
         {activeTab === 'employer' && (
-          <EmployerDashboard />
+          <EmployerDashboard activeTab={activeSubTab || 'overview'} setActiveTab={setActiveSubTab} />
         )}
 
         {/* View: Registration */}

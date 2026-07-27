@@ -15,7 +15,11 @@ import {
   Menu,
   LogOut,
   Search,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  Building2,
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import { GetWorxsLogo } from './GetWorxsLogo';
 import { type CurrencyCode, type RegionCode } from '../utils/currency';
@@ -57,6 +61,7 @@ interface NotificationItem {
 export const Navbar: React.FC<NavbarProps> = ({ 
   activeTab, 
   setActiveTab, 
+  activeSubTab,
   setActiveSubTab,
   theme,
   setTheme,
@@ -184,6 +189,343 @@ export const Navbar: React.FC<NavbarProps> = ({
       job.tags.some(t => t.toLowerCase().includes(q))
     );
   });
+
+  if (activeTab === 'employer') {
+    return (
+      <nav className="navbar employer-navbar" style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)' }}>
+        
+        {/* Left column: Logo & Nav items */}
+        <div className="navbar-left">
+          <GetWorxsLogo onClick={() => handleNavClick('employer', 'overview')} />
+          
+          <ul className="navbar-menu" style={{ marginLeft: '24px' }}>
+            {/* Dashboard */}
+            <li className="navbar-item">
+              <a 
+                href="#overview" 
+                className={`navbar-link ${(activeSubTab === 'overview' || activeSubTab === '' || activeSubTab === 'dashboard') ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'overview'); }}
+              >
+                Dashboard
+              </a>
+            </li>
+
+            {/* Jobs Dropdown */}
+            <li className="navbar-item">
+              <a 
+                href="#jobs" 
+                className={`navbar-link ${(activeSubTab === 'jobs' || activeSubTab === 'create-job') ? 'active' : ''}`}
+                onClick={(e) => e.preventDefault()}
+              >
+                Jobs <ChevronDown size={14} />
+              </a>
+              <div className="dropdown-menu">
+                <a href="#all-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'jobs'); }}>All Jobs</a>
+                <a href="#create-job" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'create-job'); }}>Create Job</a>
+                <a href="#draft-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'jobs'); }}>Draft Jobs</a>
+                <a href="#active-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'jobs'); }}>Active Jobs</a>
+              </div>
+            </li>
+
+            {/* Candidates Dropdown */}
+            <li className="navbar-item">
+              <a 
+                href="#candidates" 
+                className={`navbar-link ${(activeSubTab === 'applicants' || activeSubTab === 'interviews') ? 'active' : ''}`}
+                onClick={(e) => e.preventDefault()}
+              >
+                Candidates <ChevronDown size={14} />
+              </a>
+              <div className="dropdown-menu">
+                <a href="#applicants" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'applicants'); }}>Applicants</a>
+                <a href="#shortlisted" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'applicants'); }}>Shortlisted</a>
+                <a href="#interviews" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'interviews'); }}>Interviews</a>
+              </div>
+            </li>
+
+            {/* AI Hiring Dropdown */}
+            <li className="navbar-item">
+              <a 
+                href="#ai-hiring" 
+                className={`navbar-link ${(activeSubTab === 'ai-matching' || activeSubTab === 'resume-checker') ? 'active' : ''}`}
+                onClick={(e) => e.preventDefault()}
+              >
+                AI Hiring <ChevronDown size={14} />
+              </a>
+              <div className="dropdown-menu">
+                <a href="#ai-match" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>AI Match</a>
+                <a href="#resume-analysis" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>Resume Analysis</a>
+                <a href="#ai-jd" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'create-job'); }}>AI Job Description</a>
+              </div>
+            </li>
+
+            {/* Analytics */}
+            <li className="navbar-item">
+              <a 
+                href="#analytics" 
+                className={`navbar-link ${activeSubTab === 'analytics' ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'analytics'); }}
+              >
+                Analytics
+              </a>
+            </li>
+
+            {/* Company */}
+            <li className="navbar-item">
+              <a 
+                href="#profile" 
+                className={`navbar-link ${activeSubTab === 'profile' ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'profile'); }}
+              >
+                Company
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Center column: Candidate Search bar */}
+        <div className="navbar-search-container" ref={searchRef}>
+          <div className="navbar-search-wrapper" style={{ minWidth: '320px' }}>
+            <input 
+              type="text"
+              className="navbar-search-input"
+              placeholder="Search candidates, skills or job titles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button 
+                type="button"
+                className="navbar-search-clear"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+            <button 
+              className="navbar-search-btn"
+              onClick={() => alert(`Searching for: ${searchQuery}`)}
+              title="Search"
+              style={{ background: '#0284c7' }}
+            >
+              <Search size={16} color="#ffffff" />
+            </button>
+          </div>
+        </div>
+
+        {/* Right column: Action controls */}
+        <div className="navbar-right" ref={navbarRightRef}>
+          
+          {/* Switch back to Job Seeker Portal button */}
+          <button
+            className="global-nav-btn hide-mobile"
+            style={{
+              background: 'var(--color-primary-light)',
+              color: 'var(--color-primary)',
+              borderColor: 'var(--color-primary-border)',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '99px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              marginRight: '8px',
+              border: '1px solid var(--color-primary-border)'
+            }}
+            onClick={() => handleNavClick('home')}
+          >
+            <Sparkles size={13} />
+            <span>Job Seeker Portal</span>
+          </button>
+
+          {/* Messages */}
+          <button 
+            className="icon-button"
+            onClick={() => handleNavClick('employer', 'messages')}
+            title="Messages"
+            style={{ position: 'relative' }}
+          >
+            <MessageSquare size={17} style={{ color: '#4b5563' }} />
+            <span style={{ position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7' }} />
+          </button>
+
+          {/* Notifications Bell */}
+          <div className="notification-bell-container" style={{ position: 'relative' }}>
+            <button 
+              className="icon-button" 
+              onClick={() => setShowNotifications(!showNotifications)}
+              title="Notifications"
+            >
+              <Bell size={17} style={{ color: '#4b5563' }} />
+              {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            </button>
+
+            {/* Notifications drop down panel */}
+            {showNotifications && (
+              <div className="notification-panel" style={{ right: 0 }}>
+                <div className="notification-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: '800' }}>Employer Alerts</h4>
+                    {unreadCount > 0 && <span className="profile-tab-count">{unreadCount} New</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={handleMarkAllRead} className="ed-btn-text" style={{ fontSize: '11px', color: '#0284c7' }}>Mark read</button>
+                    <button onClick={handleClearAll} className="ed-btn-text" style={{ fontSize: '11px', color: '#ef4444' }}>Clear</button>
+                  </div>
+                </div>
+                
+                <div className="notification-list">
+                  {notifications.length > 0 ? (
+                    notifications.map(item => (
+                      <div 
+                        key={item.id} 
+                        className={`notification-item ${item.read ? 'read' : 'unread'}`}
+                        onClick={() => handleNotificationClick(item)}
+                      >
+                        <div className="notification-item-icon">
+                          {getNotificationIcon(item.type)}
+                        </div>
+                        <div className="notification-item-content">
+                          <div className="notification-item-title">{item.title}</div>
+                          <div className="notification-item-desc">{item.message}</div>
+                          <div className="notification-item-time">{item.time}</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                      No new recruitment notifications.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Language Selection */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="global-nav-btn"
+              onClick={() => setShowLangDropdown(!showLangDropdown)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            >
+              <Globe size={14} />
+              <ChevronDown size={12} />
+            </button>
+
+            {showLangDropdown && (
+              <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '150px', zIndex: 1000 }}>
+                {languages.map((lang) => (
+                  <div
+                    key={lang.code}
+                    className="dropdown-item"
+                    onClick={() => {
+                      setActiveLang(lang.code);
+                      setShowLangDropdown(false);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                  >
+                    <span>{lang.flag}</span>
+                    <span>{lang.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Dark Mode Switch */}
+          <button 
+            className="icon-button" 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+
+          {/* Employer Profile Menu Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="global-nav-btn"
+              onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', height: '36px', borderRadius: '18px' }}
+            >
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fef08a', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '11px' }}>
+                C
+              </div>
+              <span className="hide-mobile" style={{ fontSize: '13px', fontWeight: '600' }}>CHN Tech</span>
+              <ChevronDown size={12} />
+            </button>
+
+            {showAuthDropdown && (
+              <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '200px', zIndex: 1000, padding: '8px' }}>
+                <div style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fef08a', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px' }}>
+                    C
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>CHN Technologies</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>muthukumar@chn.tech</div>
+                  </div>
+                </div>
+
+                <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('employer', 'profile'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                >
+                  <Building2 size={14} style={{ color: '#0284c7' }} />
+                  <span>Company Profile</span>
+                </div>
+
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('employer', 'settings'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                >
+                  <UserCheck size={14} style={{ color: '#6366f1' }} />
+                  <span>Recruiters</span>
+                </div>
+
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('employer', 'billing'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                >
+                  <CreditCard size={14} style={{ color: '#059669' }} />
+                  <span>Billing</span>
+                </div>
+
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('employer', 'settings'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px' }}
+                >
+                  <Settings size={14} style={{ color: '#64748b' }} />
+                  <span>Settings</span>
+                </div>
+
+                <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+
+                <div 
+                  className="dropdown-item logout-item" 
+                  onClick={() => { handleNavClick('home'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', color: '#ef4444' }}
+                >
+                  <LogOut size={14} style={{ color: '#ef4444' }} />
+                  <span>Logout</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="navbar">

@@ -290,9 +290,18 @@ const initialTeamData: RecruiterTeam[] = [
   { id: 'team-3', name: 'Elena Rostova', email: 'e.rostova@getworxs.com', role: 'Interviewer', status: 'Pending' }
 ];
 
-export const EmployerDashboard: React.FC = () => {
-  // Navigation State
-  const [activeTab, setActiveTab] = useState('overview');
+interface EmployerDashboardProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+}
+
+export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({
+  activeTab: externalActiveTab,
+  setActiveTab: externalSetActiveTab
+}) => {
+  const [internalActiveTab, setInternalActiveTab] = useState('overview');
+  const activeTab = externalActiveTab || internalActiveTab;
+  const setActiveTab = externalSetActiveTab || setInternalActiveTab;
 
   // Database State
   const [jobs, setJobs] = useState<RecruiterJob[]>(initialJobsData);
