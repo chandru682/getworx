@@ -200,17 +200,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <GetWorxsLogo onClick={() => handleNavClick('employer', 'overview')} />
           
           <ul className="navbar-menu" style={{ marginLeft: '24px' }}>
-            {/* Dashboard */}
-            <li className="navbar-item">
-              <a 
-                href="#overview" 
-                className={`navbar-link ${(activeSubTab === 'overview' || activeSubTab === '' || activeSubTab === 'dashboard') ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'overview'); }}
-              >
-                Dashboard
-              </a>
-            </li>
-
             {/* Jobs Dropdown */}
             <li className="navbar-item">
               <a 
@@ -254,21 +243,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                 AI Hiring <ChevronDown size={14} />
               </a>
               <div className="dropdown-menu">
-                <a href="#ai-match" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>AI Match</a>
-                <a href="#resume-analysis" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>Resume Analysis</a>
+                <a href="#ai-match" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>AI Candidate Match</a>
+                <a href="#resume-analysis" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'ai-matching'); }}>Resume Parser</a>
                 <a href="#ai-jd" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'create-job'); }}>AI Job Description</a>
+                <a href="#interview-assistant" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'interviews'); }}>Interview Assistant</a>
               </div>
             </li>
 
-            {/* Company */}
+            {/* Company Dropdown */}
             <li className="navbar-item">
               <a 
-                href="#profile" 
-                className={`navbar-link ${activeSubTab === 'profile' ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'profile'); }}
+                href="#company" 
+                className={`navbar-link ${(activeSubTab === 'profile' || activeSubTab === 'billing' || activeSubTab === 'settings') ? 'active' : ''}`}
+                onClick={(e) => e.preventDefault()}
               >
-                Company
+                Company <ChevronDown size={14} />
               </a>
+              <div className="dropdown-menu">
+                <a href="#profile" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'profile'); }}>Company Profile</a>
+                <a href="#recruiters" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'settings'); }}>Recruiters</a>
+                <a href="#branches" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'profile'); }}>Branches</a>
+                <a href="#billing" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'billing'); }}>Billing</a>
+                <a href="#settings" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('employer', 'settings'); }}>Settings</a>
+              </div>
             </li>
           </ul>
         </div>
@@ -292,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Search size={14} color="#94a3b8" style={{ marginRight: '6px' }} />
                 <input 
                   type="text" 
-                  placeholder="Search candidates..." 
+                  placeholder="Search candidates, jobs or skills..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '12.5px', width: '150px', color: '#1e293b', padding: 0, height: '100%' }}
@@ -326,10 +323,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="icon-button" 
               onClick={() => setShowNotifications(!showNotifications)}
               title="Notifications"
-              style={{ width: '38px', height: '38px', borderRadius: '50%' }}
+              style={{ position: 'relative', width: '38px', height: '38px', borderRadius: '50%' }}
             >
               <Bell size={17} style={{ color: '#4b5563' }} />
-              {unreadCount > 0 && <span className="notification-badge" style={{ top: '2px', right: '2px' }}>{unreadCount}</span>}
+              {unreadCount > 0 && (
+                <span 
+                  className="notification-badge" 
+                  style={{ 
+                    position: 'absolute', 
+                    top: '4px', 
+                    right: '4px', 
+                    background: '#ef4444', 
+                    color: '#ffffff', 
+                    borderRadius: '50%', 
+                    padding: '2px', 
+                    fontSize: '9.5px', 
+                    fontWeight: '800', 
+                    lineHeight: 1, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    minWidth: '12px',
+                    height: '12px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
             </button>
 
             {/* Notifications Dropdown Panel */}
@@ -340,9 +361,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <h4 style={{ fontSize: '14px', fontWeight: '800' }}>Employer Alerts</h4>
                     {unreadCount > 0 && <span className="profile-tab-count">{unreadCount} New</span>}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={handleMarkAllRead} className="ed-btn-text" style={{ fontSize: '11px', color: '#0284c7' }}>Mark read</button>
-                    <button onClick={handleClearAll} className="ed-btn-text" style={{ fontSize: '11px', color: '#ef4444' }}>Clear</button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button 
+                      onClick={handleMarkAllRead} 
+                      style={{ fontSize: '11px', color: '#0284c7', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, fontWeight: '600' }}
+                    >
+                      Mark read
+                    </button>
+                    <button 
+                      onClick={handleClearAll} 
+                      style={{ fontSize: '11px', color: '#ef4444', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, fontWeight: '600' }}
+                    >
+                      Clear
+                    </button>
                   </div>
                 </div>
                 
@@ -379,13 +410,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               className="global-nav-btn"
               onClick={() => setShowAuthDropdown(!showAuthDropdown)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', height: '36px', borderRadius: '18px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', height: '36px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
             >
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fef08a', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '11px' }}>
-                C
-              </div>
-              <span className="hide-mobile" style={{ fontSize: '13px', fontWeight: '600' }}>CHN Tech</span>
-              <ChevronDown size={12} />
+              <span style={{ fontSize: '14px', display: 'flex', alignItems: 'center' }}>🏢</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>CHN Technologies</span>
+              <ChevronDown size={12} style={{ marginLeft: '4px', color: '#64748b' }} />
             </button>
 
             {showAuthDropdown && (
