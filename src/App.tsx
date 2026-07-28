@@ -296,25 +296,27 @@ function App() {
       <div className="bg-gradient-mesh" />
 
       {/* Top Global Navigation Bar */}
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        activeSubTab={activeSubTab} 
-        setActiveSubTab={setActiveSubTab} 
-        theme={theme}
-        setTheme={setTheme}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        jobsList={jobsList}
-        activeCurrency={activeCurrency}
-        setActiveCurrency={setActiveCurrency}
-        activeRegion={activeRegion}
-        setActiveRegion={setActiveRegion}
-        visaOnly={visaOnly}
-        setVisaOnly={setVisaOnly}
-        activeLang={activeLang}
-        setActiveLang={setActiveLang}
-      />
+      {activeTab !== 'admin' && (
+        <Navbar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          activeSubTab={activeSubTab} 
+          setActiveSubTab={setActiveSubTab} 
+          theme={theme}
+          setTheme={setTheme}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          jobsList={jobsList}
+          activeCurrency={activeCurrency}
+          setActiveCurrency={setActiveCurrency}
+          activeRegion={activeRegion}
+          setActiveRegion={setActiveRegion}
+          visaOnly={visaOnly}
+          setVisaOnly={setVisaOnly}
+          activeLang={activeLang}
+          setActiveLang={setActiveLang}
+        />
+      )}
 
       {/* Main Viewport Container */}
       <main style={{ flex: 1 }}>
