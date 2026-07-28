@@ -156,6 +156,10 @@ export const JobsTab: React.FC<JobsTabProps> = ({
           <span className="label">Drafts</span>
           <span className="value gray-txt">{jobs.filter(j => j.status === 'draft').length}</span>
         </div>
+        <div className="mini-stat">
+          <span className="label">Closed</span>
+          <span className="value red-txt">{jobs.filter(j => j.status === 'closed').length}</span>
+        </div>
       </div>
 
       {/* Filters & Control bar */}

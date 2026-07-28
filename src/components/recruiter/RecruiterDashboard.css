@@ -399,6 +399,17 @@
   flex-grow: 1;
   padding: 32px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workspace-main-viewport.no-padding {
+  padding: 0;
+}
+
+.workspace-main-viewport.no-scroll {
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -1061,6 +1072,7 @@
 .mini-stat .green-txt { color: var(--ed-success); }
 .mini-stat .orange-txt { color: var(--ed-warning); }
 .mini-stat .gray-txt { color: var(--ed-text-muted); }
+.mini-stat .red-txt { color: var(--ed-accent); }
 
 .jobs-controls-bar {
   display: flex;
@@ -3392,23 +3404,36 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.form-group label { font-size: 11px; font-weight: 700; color: var(--ed-text-muted); text-transform: uppercase; }
+.form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ed-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 .form-group input, .form-group select {
-  padding: 8px 12px;
+  padding: 11px 14px;
   border: 1px solid var(--ed-border);
   border-radius: var(--ed-radius-sm);
-  font-size: 13px;
+  font-size: 13.5px;
+  font-family: inherit;
   outline: none;
   background: var(--ed-bg-card);
+  color: var(--ed-text-primary);
+  transition: border-color var(--transition-fast);
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--ed-primary);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.08);
 }
 
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .radio-meet-group {
@@ -3660,18 +3685,20 @@
    MESSAGES CHAT CENTER
    ========================================================================== */
 .messages-workspace {
-  height: calc(100vh - 160px);
+  flex-grow: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .messages-split-layout {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  height: 100%;
+  grid-template-columns: 1fr 2.2fr;
+  flex-grow: 1;
   background: var(--ed-bg-card);
-  border: 1px solid var(--ed-border);
-  border-radius: var(--ed-radius);
-  box-shadow: var(--ed-shadow-sm);
   overflow: hidden;
+  min-height: 0;
 }
 
 .messages-threads-col {
@@ -3710,6 +3737,7 @@
 
 .threads-list-scroll {
   flex-grow: 1;
+  min-height: 0;
 }
 
 .thread-item-card {
@@ -3755,12 +3783,17 @@
 .chat-window-col {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chat-interface-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chat-header {
@@ -3779,8 +3812,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
+.avatar-xs { width: 28px; height: 28px; border-radius: 99px; object-fit: cover; flex-shrink: 0; }
 .message-bubble-row { display: flex; gap: 12px; align-items: flex-end; }
 .message-bubble-row.sent { justify-content: flex-end; }
 
@@ -4366,9 +4402,9 @@
    MULTI-STEP JOB CREATOR WIZARD
    ========================================================================== */
 .naukri-post-container {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 28px;
+  display: grid !important;
+  grid-template-columns: 260px 1fr !important;
+  gap: 28px !important;
   max-width: 1200px;
   margin: 0 auto;
   align-items: start;
@@ -4380,11 +4416,13 @@
   border-radius: var(--ed-radius);
   padding: 24px;
   box-shadow: var(--ed-shadow-sm);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   gap: 24px;
-  position: sticky;
-  top: 96px;
+  position: relative !important;
+  top: auto !important;
+  width: 260px !important;
+  flex-shrink: 0 !important;
 }
 
 .naukri-sidebar-header {
@@ -4508,7 +4546,8 @@
 .naukri-form-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  min-width: 0;
 }
 
 .naukri-prefill-banner {
@@ -4535,20 +4574,20 @@
   background: var(--ed-bg-card);
   border: 1px solid var(--ed-border);
   border-radius: var(--ed-radius);
-  padding: 32px;
+  padding: 36px 40px;
   box-shadow: var(--ed-shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .naukri-form-section-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--ed-text-primary);
   border-bottom: 1px solid var(--ed-border);
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+  padding-bottom: 14px;
+  margin-bottom: 6px;
 }
 
 .naukri-tags-input-wrapper {
@@ -4821,4 +4860,7 @@
 
 .form-fade-in {
   animation: fadeIn var(--transition-normal) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }

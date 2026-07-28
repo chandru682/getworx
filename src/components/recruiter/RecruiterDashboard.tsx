@@ -92,6 +92,17 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
   // Prefilled candidate name for scheduling modal
   const [prefillName, setPrefillName] = useState('');
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+
+  // Sync prefillName selections to active selected message thread
+  useEffect(() => {
+    if (prefillName) {
+      const found = threads.find(t => t.name.toLowerCase().includes(prefillName.toLowerCase()));
+      if (found) {
+        setActiveThreadId(found.id);
+      }
+    }
+  }, [prefillName, threads]);
 
   // Sync prop active tab changes from Navbar/Parent App
   useEffect(() => {
@@ -433,7 +444,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
         </header>
 
         {/* Scrollable Main Viewport */}
-        <main className="workspace-main-viewport scroll-y">
+        <main className={`workspace-main-viewport ${localTab === 'messages' ? 'no-padding no-scroll' : 'scroll-y'}`}>
           
           {localTab === 'dashboard' && (
             <DashboardTab 
@@ -532,8 +543,9 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
             <MessagesTab 
               threads={threads}
               onSendMessage={handleSendMessage}
-              activeThreadId={prefillName ? (threads.find(t => t.name.toLowerCase().includes(prefillName.toLowerCase()))?.id || null) : null}
+              activeThreadId={activeThreadId}
               setActiveThreadId={(id) => {
+                setActiveThreadId(id);
                 if(!id) setPrefillName('');
               }}
             />
