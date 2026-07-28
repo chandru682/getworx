@@ -805,6 +805,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span>Recruiter Portal</span>
         </button>
 
+        {/* Platform Console (Admin) Button */}
+        <button
+          className="global-nav-btn hide-mobile"
+          style={{
+            background: 'linear-gradient(135deg, #0F172A, #1E1B4B)',
+            color: '#ffffff',
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '99px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            marginRight: '8px',
+            border: '1px solid rgba(109, 40, 217, 0.4)',
+            boxShadow: '0 2px 8px rgba(109,40,217,0.25)'
+          }}
+          onClick={() => handleNavClick('admin')}
+        >
+          <span style={{ fontSize: 13 }}>⚙️</span>
+          <span>Console</span>
+          <span style={{ fontSize: 8, fontWeight: 900, background: '#FF1744', color: 'white', padding: '1px 5px', borderRadius: 99, letterSpacing: 0.5 }}>ADMIN</span>
+        </button>
+
+
         {/* Standalone Bell Notification Icon */}
         <div className="notification-bell-container" style={{ position: 'relative' }}>
           <button 
