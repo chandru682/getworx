@@ -526,6 +526,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Recruiter Portal</span>
                 </div>
 
+                {/* Platform Console (Admin) */}
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#0F172A', background: 'rgba(109,40,217,0.06)', marginTop: 2 }}
+                >
+                  <span style={{ fontSize: 13 }}>⚙️</span>
+                  <span>Platform Console</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, background: '#FF1744', color: 'white', padding: '2px 6px', borderRadius: 99 }}>ADMIN</span>
+                </div>
+
                 <div className="dropdown-divider" style={{ margin: '6px 0' }} />
 
                 <div 

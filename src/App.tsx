@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { FilterSidebar, type FilterState } from './components/FilterSidebar';
 import { EmployerDashboard } from './components/EmployerDashboard';
 import { RecruiterDashboard } from './components/recruiter/RecruiterDashboard';
+import AdminConsole from './components/admin/AdminConsole';
 import { JobCard, type Job } from './components/JobCard';
 import { AIInterview } from './components/AIInterview';
 import { ResumeChecker } from './components/ResumeChecker';
@@ -689,6 +690,11 @@ function App() {
             setActiveTab={setActiveSubTab} 
             exitPortal={() => setActiveTab('home')}
           />
+        )}
+
+        {/* View: Admin Platform Console */}
+        {activeTab === 'admin' && (
+          <AdminConsole />
         )}
 
         {/* View: Registration */}
