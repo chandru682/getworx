@@ -110,12 +110,12 @@ function AIAssistant({ onClose }: { onClose: () => void }) {
     if (!text.trim()) return;
     const userMsg = { role: 'user', text };
     const aiResponses: Record<string, string> = {
-      'expired': '📊 **Expired Subscriptions**: 14 companies have subscriptions expiring in the next 7 days. Total at-risk ARR: **$48,300**. Recommend sending renewal reminders via email.',
+      'expired': '📊 **Expired Subscriptions**: 14 companies have subscriptions expiring in the next 7 days. Total at-risk ARR: **₹48,300**. Recommend sending renewal reminders via email.',
       'top recruiter': '🏆 **Top Recruiters this Month**:\n1. Marcus Williams — 41 hires (84% interview rate)\n2. Sarah Chen — 32 hires (78% rate)\n3. Elena Rossi — 24 hires (71% rate)',
-      'revenue': '💰 **Revenue Snapshot**: July MRR: **$79,200** (+12.4% vs June). Enterprise plan contributes 68%. 4 pending payments totaling $8,930.',
+      'revenue': '💰 **Revenue Snapshot**: July MRR: **₹79,200** (+12.4% vs June). Enterprise plan contributes 68%. 4 pending payments totaling ₹8,930.',
       'support': '🎫 **Open Tickets**: 7 total — 2 Critical, 2 High, 3 Medium. Average resolution time: 4.2 hours. 2 tickets unassigned.',
-      'ai usage': '🤖 **AI Cost Breakdown**: Total July spend: **$9,964**. Highest: Candidate Matching ($2,911). Resume Parsing ($2,513). Total requests: 202,810.',
-      'executive': '📋 **Executive Report Generated**:\n• Platform MRR: $79,200 ↑12.4%\n• Total Companies: 842 (+47 this month)\n• Active Jobs: 2,340 | Applications: 18,420\n• AI Requests: 202,810 | Uptime: 99.98%',
+      'ai usage': '🤖 **AI Cost Breakdown**: Total July spend: **₹9,964**. Highest: Candidate Matching (₹2,911). Resume Parsing (₹2,513). Total requests: 202,810.',
+      'executive': '📋 **Executive Report Generated**:\n• Platform MRR: ₹79,200 ↑12.4%\n• Total Companies: 842 (+47 this month)\n• Active Jobs: 2,340 | Applications: 18,420\n• AI Requests: 202,810 | Uptime: 99.98%',
     };
     const key = Object.keys(aiResponses).find(k => text.toLowerCase().includes(k));
     const reply = aiResponses[key || ''] || `Analyzing "${text}"... Here's what I found: Platform is performing well with 99.98% uptime. Would you like me to drill deeper into any specific metric?`;
@@ -171,7 +171,7 @@ function DashboardTab() {
     { label: 'Candidates', value: '94,210', change: '+5,180', up: true, icon: <UserPlus size={18} />, color: '#F59E0B', bg: '#FEF3C7' },
     { label: 'Jobs Today', value: '284', change: '+18', up: true, icon: <Briefcase size={18} />, color: '#8B5CF6', bg: '#EDE9FE' },
     { label: 'Applications Today', value: '1,842', change: '+312', up: true, icon: <FileText size={18} />, color: '#EC4899', bg: '#FCE7F3' },
-    { label: 'Monthly Revenue', value: '$79.2K', change: '+12.4%', up: true, icon: <DollarSign size={18} />, color: '#059669', bg: '#D1FAE5' },
+    { label: 'Monthly Revenue', value: '₹79.2K', change: '+12.4%', up: true, icon: <DollarSign size={18} />, color: '#059669', bg: '#D1FAE5' },
     { label: 'Active Subs', value: '284', change: '+17', up: true, icon: <Star size={18} />, color: '#0EA5E9', bg: '#E0F2FE' },
     { label: 'AI Requests Today', value: '8,421', change: '-3.1%', up: false, icon: <Zap size={18} />, color: '#6D28D9', bg: '#EDE9FE' },
     { label: 'Platform Uptime', value: '99.98%', change: '+0.01%', up: true, icon: <Activity size={18} />, color: '#10B981', bg: '#D1FAE5' },
@@ -205,7 +205,7 @@ function DashboardTab() {
             {revenueChartData.map(d => (
               <div key={d.month} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 11, color: 'var(--ac-text-muted)', fontWeight: 600 }}>{d.month}</div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ac-text-secondary)' }}>${(d.revenue / 1000).toFixed(0)}K</div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ac-text-secondary)' }}>₹{(d.revenue / 1000).toFixed(0)}K</div>
               </div>
             ))}
           </div>
@@ -311,7 +311,7 @@ function DashboardTab() {
       <div className="ac-charts-grid">
         <div className="ac-chart-card">
           <div className="ac-chart-title">AI Usage This Month</div>
-          <div className="ac-chart-subtitle">Breakdown by feature · Total cost: $9,964</div>
+          <div className="ac-chart-subtitle">Breakdown by feature · Total cost: ₹9,964</div>
           <div className="ac-ai-usage-grid" style={{ marginTop: 8 }}>
             {aiUsageData.map((a, i) => {
               const maxCount = Math.max(...aiUsageData.map(x => x.count));
@@ -325,7 +325,7 @@ function DashboardTab() {
                       <div className="ac-ai-usage-fill" style={{ width: `${(a.count / maxCount) * 100}%` }} />
                     </div>
                   </div>
-                  <div className="ac-ai-usage-cost">${a.cost.toLocaleString()}</div>
+                  <div className="ac-ai-usage-cost">₹{a.cost.toLocaleString()}</div>
                 </div>
               );
             })}
@@ -445,7 +445,7 @@ function CompaniesTab() {
                 <td style={{ fontWeight: 700 }}>{c.jobs}</td>
                 <td style={{ fontWeight: 700 }}>{c.applications.toLocaleString()}</td>
                 <td style={{ fontWeight: 700, color: 'var(--ac-success)' }}>
-                  {c.revenue > 0 ? `$${c.revenue.toLocaleString()}` : '—'}
+                  {c.revenue > 0 ? `₹${c.revenue.toLocaleString()}` : '—'}
                 </td>
                 <td><Badge status={c.status} /></td>
                 <td>
@@ -635,9 +635,9 @@ function JobsAdminTab() {
 ═══════════════════════════════════════════════════ */
 function SubscriptionsTab() {
   const plans = [
-    { name: 'Starter', price: '$49', count: 84, pct: 30, color: '#64748B', total: '$4,116/mo' },
-    { name: 'Growth', price: '$199', count: 138, pct: 49, color: '#3B82F6', total: '$27,462/mo', featured: true },
-    { name: 'Enterprise', price: '$699', count: 54, pct: 19, color: '#6D28D9', total: '$37,746/mo' },
+    { name: 'Starter', price: '₹4,000', count: 84, pct: 30, color: '#64748B', total: '₹3,36,000/mo' },
+    { name: 'Growth', price: '₹15,999', count: 138, pct: 49, color: '#3B82F6', total: '₹22,07,862/mo', featured: true },
+    { name: 'Enterprise', price: '₹54,999', count: 54, pct: 19, color: '#6D28D9', total: '₹29,69,946/mo' },
     { name: 'Trial', price: 'Free', count: 8, pct: 3, color: '#F59E0B', total: '—' },
   ];
   return (
@@ -672,10 +672,10 @@ function SubscriptionsTab() {
           <div className="ac-chart-title">Expiring Soon</div>
           <div className="ac-chart-subtitle">Subscriptions expiring in next 30 days</div>
           {[
-            { name: 'TechNova Solutions', plan: 'Enterprise', days: 4, revenue: '$8,400' },
-            { name: 'MediCare Health', plan: 'Growth', days: 8, revenue: '$2,800' },
-            { name: 'Stellar Logistics', plan: 'Starter', days: 12, revenue: '$490' },
-            { name: 'AutoDrive Tech', plan: 'Growth', days: 18, revenue: '$3,360' },
+            { name: 'TechNova Solutions', plan: 'Enterprise', days: 4, revenue: '₹8,400' },
+            { name: 'MediCare Health', plan: 'Growth', days: 8, revenue: '₹2,800' },
+            { name: 'Stellar Logistics', plan: 'Starter', days: 12, revenue: '₹490' },
+            { name: 'AutoDrive Tech', plan: 'Growth', days: 18, revenue: '₹3,360' },
             { name: 'PixelForge Studios', plan: 'Trial', days: 21, revenue: '—' },
           ].map((e, i) => (
             <div key={i} className="ac-list-item">
@@ -710,10 +710,10 @@ function PaymentsTab() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {[
-          { label: 'Monthly Revenue', value: '$79,200', sub: '+12.4% vs last month', color: '#10B981' },
-          { label: 'Annual Revenue', value: '$631,800', sub: 'YTD 2024', color: '#6D28D9' },
-          { label: 'Pending Payments', value: '$12,430', sub: '6 transactions', color: '#F59E0B' },
-          { label: 'Refunds (July)', value: '$1,960', sub: '1 refund processed', color: '#EF4444' },
+          { label: 'Monthly Revenue', value: '₹79,200', sub: '+12.4% vs last month', color: '#10B981' },
+          { label: 'Annual Revenue', value: '₹631,800', sub: 'YTD 2024', color: '#6D28D9' },
+          { label: 'Pending Payments', value: '₹12,430', sub: '6 transactions', color: '#F59E0B' },
+          { label: 'Refunds (July)', value: '₹1,960', sub: '1 refund processed', color: '#EF4444' },
         ].map((s, i) => (
           <div key={i} className="ac-stat-card">
             <div className="ac-stat-value" style={{ fontSize: 24, color: s.color }}>{s.value}</div>
@@ -724,7 +724,7 @@ function PaymentsTab() {
       </div>
       <div className="ac-chart-card">
         <div className="ac-chart-title">Revenue Trend — 2024</div>
-        <div className="ac-chart-subtitle">Monthly recurring revenue in USD</div>
+        <div className="ac-chart-subtitle">Monthly recurring revenue in INR (₹)</div>
         <BarChartViz data={revenueChartData.map(d => ({ label: d.month, value: d.revenue }))} colorStart="#6D28D9" colorEnd="#8B5CF6" />
       </div>
       <div className="ac-table-wrapper">
@@ -743,7 +743,7 @@ function PaymentsTab() {
                 <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--ac-primary)' }}>{t.invoice}</td>
                 <td style={{ fontWeight: 600, fontSize: 13 }}>{t.company}</td>
                 <td><Badge status={t.plan.toLowerCase()} label={t.plan} /></td>
-                <td style={{ fontWeight: 800, fontSize: 14, color: t.amount > 0 ? 'var(--ac-text-primary)' : 'var(--ac-accent)' }}>${t.amount.toLocaleString()}</td>
+                <td style={{ fontWeight: 800, fontSize: 14, color: t.amount > 0 ? 'var(--ac-text-primary)' : 'var(--ac-accent)' }}>₹{t.amount.toLocaleString()}</td>
                 <td style={{ fontSize: 12.5, color: 'var(--ac-text-muted)' }}>{t.method}</td>
                 <td style={{ fontSize: 12, color: 'var(--ac-text-muted)' }}>{t.date}</td>
                 <td><Badge status={t.status} /></td>
@@ -773,7 +773,7 @@ function AIUsageTab() {
         {[
           { label: 'Total Requests', value: '202,810', icon: '🤖', color: '#6D28D9', bg: '#EDE9FE' },
           { label: 'Tokens Used', value: '1.4B', icon: '⚡', color: '#F59E0B', bg: '#FEF3C7' },
-          { label: 'Total Cost', value: '$9,964', icon: '💵', color: '#10B981', bg: '#D1FAE5' },
+          { label: 'Total Cost', value: '₹9,964', icon: '💵', color: '#10B981', bg: '#D1FAE5' },
           { label: 'Avg Response', value: '1.2s', icon: '⏱', color: '#3B82F6', bg: '#DBEAFE' },
         ].map((s, i) => (
           <div key={i} className="ac-stat-card">
@@ -798,7 +798,7 @@ function AIUsageTab() {
                     <div className="ac-ai-usage-count">{a.count.toLocaleString()} requests</div>
                     <div className="ac-ai-usage-track"><div className="ac-ai-usage-fill" style={{ width: `${(a.count / maxCount) * 100}%` }} /></div>
                   </div>
-                  <div className="ac-ai-usage-cost">${a.cost.toLocaleString()}</div>
+                  <div className="ac-ai-usage-cost">₹{a.cost.toLocaleString()}</div>
                 </div>
               );
             })}

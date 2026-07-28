@@ -57,7 +57,7 @@ const initialFilterState: FilterState = {
 function App() {
   // Global Product States
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
-  const [activeCurrency, setActiveCurrency] = useState<CurrencyCode>('USD');
+  const [activeCurrency, setActiveCurrency] = useState<CurrencyCode>('INR');
   const [activeRegion, setActiveRegion] = useState<RegionCode>('all');
   const [visaOnly, setVisaOnly] = useState(false);
   const [relocationOnly, setRelocationOnly] = useState(false);
