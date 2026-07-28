@@ -46,6 +46,7 @@ import { TasksTab } from './TasksTab';
 import { ReportsTab } from './ReportsTab';
 import { NotificationsTab } from './NotificationsTab';
 import { ProfileTab } from './ProfileTab';
+import { CreateJobTab } from './CreateJobTab';
 
 import './RecruiterDashboard.css';
 
@@ -86,7 +87,6 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   // Modals visibility state
-  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isScheduleInterviewOpen, setIsScheduleInterviewOpen] = useState(false);
   const [isAiJdOpen, setIsAiJdOpen] = useState(false);
 
@@ -98,11 +98,6 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
     if (parentActiveTab) {
       const mapped = mapPropToLocalTab(parentActiveTab);
       setLocalTab(mapped);
-
-      // Trigger modals if parent requested it
-      if (parentActiveTab === 'create-job') {
-        setIsCreateJobOpen(true);
-      }
     }
   }, [parentActiveTab]);
 
@@ -111,7 +106,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
       case 'overview': return 'dashboard';
       case 'ai-matching': return 'ai-match';
       case 'analytics': return 'reports';
-      case 'create-job': return 'jobs';
+      case 'create-job': return 'create-job';
       case 'settings':
       case 'billing': return 'profile';
       default: return tab;
@@ -298,44 +293,6 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
     }, 600);
   };
 
-  // Modals forms submit
-  const [createJobTitle, setCreateJobTitle] = useState('');
-  const [createJobDept, setCreateJobDept] = useState('Engineering');
-  const [createJobLoc, setCreateJobLoc] = useState('');
-  const [createJobSal, setCreateJobSal] = useState('');
-  const [createJobType, setCreateJobType] = useState('Full-time');
-  const [createJobExp, setCreateJobExp] = useState('3-5 years');
-
-  const handleCreateJobSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!createJobTitle || !createJobLoc) return;
-
-    const newJob: RecruiterJob = {
-      id: `job-${Date.now()}`,
-      title: createJobTitle,
-      department: createJobDept,
-      location: createJobLoc,
-      employmentType: createJobType,
-      experience: createJobExp,
-      salaryRange: createJobSal || '$80k - $120k',
-      applications: 0,
-      shortlisted: 0,
-      interviewProgress: 0,
-      status: 'active',
-      postedDate: new Date().toISOString().split('T')[0]
-    };
-
-    handleAddJob(newJob);
-    alert(`Successfully launched "${createJobTitle}"!`);
-    setIsCreateJobOpen(false);
-
-    // Reset Form
-    setCreateJobTitle('');
-    setCreateJobLoc('');
-    setCreateJobSal('');
-    handleTabChange('jobs');
-  };
-
   // AI JD Generator
   const [jdRoleTitle, setJdRoleTitle] = useState('');
   const [jdKeywords, setJdKeywords] = useState('');
@@ -357,11 +314,8 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
   };
 
   const handleAdoptJd = () => {
-    setCreateJobTitle(jdRoleTitle);
-    setCreateJobSal('$90k - $130k');
-    setCreateJobLoc('Remote');
     setIsAiJdOpen(false);
-    setIsCreateJobOpen(true);
+    handleTabChange('create-job');
   };
 
   return (
@@ -448,7 +402,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
           {/* Quick Header Widgets */}
           <div className="header-utilities">
-            <button className="utility-btn font-sans" onClick={() => setIsCreateJobOpen(true)}>
+            <button className="utility-btn font-sans" onClick={() => handleTabChange('create-job')}>
               <Plus size={16} />
               <span>Create Job</span>
             </button>
@@ -489,7 +443,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
               tasks={tasks}
               onNavigate={handleTabChange}
               onSelectCandidate={setSelectedCandidate}
-              openCreateJobModal={() => setIsCreateJobOpen(true)}
+              openCreateJobModal={() => handleTabChange('create-job')}
               openScheduleInterviewModal={() => setIsScheduleInterviewOpen(true)}
               openAiJdGenerator={() => setIsAiJdOpen(true)}
             />
@@ -501,8 +455,15 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
               onAddJob={handleAddJob}
               onUpdateJob={handleUpdateJob}
               onDeleteJob={handleDeleteJob}
-              openCreateJobModal={() => setIsCreateJobOpen(true)}
+              openCreateJobModal={() => handleTabChange('create-job')}
               openAiJdGenerator={() => setIsAiJdOpen(true)}
+            />
+          )}
+
+          {localTab === 'create-job' && (
+            <CreateJobTab 
+              onAddJob={handleAddJob}
+              onNavigate={handleTabChange}
             />
           )}
 
@@ -608,7 +569,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
       {/* Floating Quick Action Button */}
       <div className="floating-quick-action-trigger">
-        <button className="fab-btn" onClick={() => setIsCreateJobOpen(true)}>
+        <button className="fab-btn" onClick={() => handleTabChange('create-job')}>
           <Plus size={24} />
         </button>
       </div>
@@ -640,97 +601,6 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
                 className="font-sans"
               />
               <button type="submit"><Sparkles size={14} /></button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Create Job Listing Modal */}
-      {isCreateJobOpen && (
-        <div className="schedule-modal-backdrop animate-fade-in" onClick={() => setIsCreateJobOpen(false)}>
-          <div className="schedule-modal-content animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Launch New Job Opening</h2>
-              <button className="btn-close-modal" onClick={() => setIsCreateJobOpen(false)}><X size={18} /></button>
-            </div>
-
-            <form onSubmit={handleCreateJobSubmit}>
-              <div className="modal-body-form">
-                
-                <div className="form-group">
-                  <label>Job Position Title:</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Lead Devops Architect" 
-                    value={createJobTitle} 
-                    onChange={(e) => setCreateJobTitle(e.target.value)}
-                    required
-                    className="font-sans"
-                  />
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label>Department:</label>
-                    <select value={createJobDept} onChange={(e) => setCreateJobDept(e.target.value)} className="font-sans">
-                      <option value="Engineering">Engineering</option>
-                      <option value="AI & Data Science">AI & Data Science</option>
-                      <option value="Product Design">Product Design</option>
-                      <option value="Talent Acquisition">Talent Acquisition</option>
-                      <option value="People Operations">People Operations</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Location:</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Remote / Bengaluru" 
-                      value={createJobLoc} 
-                      onChange={(e) => setCreateJobLoc(e.target.value)}
-                      required
-                      className="font-sans"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label>Compensation Scale:</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. $120k - $150k" 
-                      value={createJobSal} 
-                      onChange={(e) => setCreateJobSal(e.target.value)}
-                      className="font-sans"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Employment Type:</label>
-                    <select value={createJobType} onChange={(e) => setCreateJobType(e.target.value)} className="font-sans">
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Experience Required:</label>
-                  <select value={createJobExp} onChange={(e) => setCreateJobExp(e.target.value)} className="font-sans">
-                    <option value="1-3 years">Junior (1-3 yrs)</option>
-                    <option value="3-5 years">Mid-Level (3-5 yrs)</option>
-                    <option value="5-8 years">Senior (5-8 yrs)</option>
-                    <option value="8+ years">Staff / Lead (8+ yrs)</option>
-                  </select>
-                </div>
-
-              </div>
-
-              <div className="modal-footer-actions">
-                <button type="button" className="btn-cancel font-sans" onClick={() => setIsCreateJobOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-submit font-sans">Launch Listing</button>
-              </div>
             </form>
           </div>
         </div>
