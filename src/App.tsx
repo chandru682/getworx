@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { FilterSidebar, type FilterState } from './components/FilterSidebar';
 import { EmployerDashboard } from './components/EmployerDashboard';
+import { RecruiterDashboard } from './components/recruiter/RecruiterDashboard';
 import { JobCard, type Job } from './components/JobCard';
 import { AIInterview } from './components/AIInterview';
 import { ResumeChecker } from './components/ResumeChecker';
@@ -676,9 +677,18 @@ function App() {
           </div>
         )}
 
-        {/* View: Employer Dashboard (Recruiter Portal) */}
+        {/* View: Employer Dashboard */}
         {activeTab === 'employer' && (
           <EmployerDashboard activeTab={activeSubTab || 'overview'} setActiveTab={setActiveSubTab} />
+        )}
+
+        {/* View: Recruiter Dashboard */}
+        {activeTab === 'recruiter' && (
+          <RecruiterDashboard 
+            activeTab={activeSubTab || 'dashboard'} 
+            setActiveTab={setActiveSubTab} 
+            exitPortal={() => setActiveTab('home')}
+          />
         )}
 
         {/* View: Registration */}

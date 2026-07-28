@@ -191,6 +191,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   });
 
+  if (activeTab === 'recruiter') {
+    return null;
+  }
+
   if (activeTab === 'employer') {
     return (
       <nav className="navbar employer-navbar" style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)' }}>
@@ -502,8 +506,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </div>
 
-                <div className="dropdown-divider" style={{ margin: '6px 0' }} />
-
                 {/* Switch back to Job Seeker Portal link */}
                 <div 
                   className="dropdown-item" 
@@ -513,6 +515,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
                   <span>Job Seeker Portal</span>
                 </div>
+
+                {/* Switch to Recruiter Portal link */}
+                <div 
+                  className="dropdown-item" 
+                  onClick={() => { handleNavClick('recruiter'); setShowAuthDropdown(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#6d28d9' }}
+                >
+                  <Sparkles size={14} style={{ color: '#6d28d9' }} />
+                  <span>Recruiter Portal</span>
+                </div>
+
+                <div className="dropdown-divider" style={{ margin: '6px 0' }} />
 
                 <div 
                   className="dropdown-item logout-item" 
@@ -732,13 +746,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* Recruiter Switch Button */}
+        {/* Employer Switch Button */}
         <button
           className="global-nav-btn hide-mobile"
           style={{
-            background: activeTab === 'employer' ? 'var(--color-accent-light)' : 'var(--color-primary-light)',
-            color: activeTab === 'employer' ? 'var(--color-accent)' : 'var(--color-primary)',
-            borderColor: activeTab === 'employer' ? 'var(--color-accent-border)' : 'var(--color-primary-border)',
+            background: 'var(--color-primary-light)',
+            color: 'var(--color-primary)',
+            borderColor: 'var(--color-primary-border)',
             fontWeight: '700',
             display: 'flex',
             alignItems: 'center',
@@ -750,10 +764,34 @@ export const Navbar: React.FC<NavbarProps> = ({
             marginRight: '8px',
             border: '1px solid var(--color-primary-border)'
           }}
-          onClick={() => handleNavClick(activeTab === 'employer' ? 'home' : 'employer')}
+          onClick={() => handleNavClick('employer')}
         >
-          {activeTab === 'employer' ? <Briefcase size={14} /> : <Sparkles size={14} />}
-          <span>{activeTab === 'employer' ? 'Job Seeker Portal' : 'Employer Portal'}</span>
+          <Building2 size={14} style={{ color: 'var(--color-primary)' }} />
+          <span>Employer Portal</span>
+        </button>
+
+        {/* Recruiter Switch Button */}
+        <button
+          className="global-nav-btn hide-mobile"
+          style={{
+            background: 'rgba(109, 40, 217, 0.08)',
+            color: '#6d28d9',
+            borderColor: 'rgba(109, 40, 217, 0.15)',
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '99px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            marginRight: '8px',
+            border: '1px solid rgba(109, 40, 217, 0.15)'
+          }}
+          onClick={() => handleNavClick('recruiter')}
+        >
+          <Sparkles size={14} style={{ color: '#6d28d9' }} />
+          <span>Recruiter Portal</span>
         </button>
 
         {/* Standalone Bell Notification Icon */}
@@ -983,9 +1021,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <div className="dropdown-divider" style={{ margin: '6px 0' }} />
 
-              {/* Employer Portal Section */}
+              {/* Work Portals Section */}
               <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
-                EMPLOYER PORTAL
+                WORK PORTALS
               </div>
 
               <div 
@@ -993,8 +1031,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => { handleNavClick('employer'); setShowAuthDropdown(false); }}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
               >
-                <Sparkles size={15} style={{ color: 'var(--color-primary)' }} />
-                <span>Recruiter Hub</span>
+                <Building2 size={15} style={{ color: 'var(--color-primary)' }} />
+                <span>Employer Portal</span>
+              </div>
+
+              <div 
+                className="dropdown-item" 
+                onClick={() => { handleNavClick('recruiter'); setShowAuthDropdown(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
+              >
+                <Sparkles size={15} style={{ color: '#6d28d9' }} />
+                <span>Recruiter Portal</span>
               </div>
 
               <div className="dropdown-divider" style={{ margin: '6px 0' }} />
