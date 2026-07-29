@@ -21,35 +21,146 @@ import {
 } from './AdminMockData';
 
 /* ═══════════════════════════════════════════════════
-   Helper: SVG Line Chart
+   Helper: SVG Line Chart (Smooth Bezier Spline + Grid + Tooltips)
 ═══════════════════════════════════════════════════ */
-function LineChart({ data, color = '#6D28D9', height = 100 }: {
+function getBezierPath(pts: { x: number; y: number }[]) {
+  if (pts.length === 0) return '';
+  if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
+  let path = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const curr = pts[i];
+    const next = pts[i + 1];
+    const cp1x = curr.x + (next.x - curr.x) / 2.5;
+    const cp1y = curr.y;
+    const cp2x = curr.x + (next.x - curr.x) / 2.5;
+    const cp2y = next.y;
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+  }
+  return path;
+}
+
+function LineChart({ data, color = '#6D28D9', height = 150 }: {
   data: number[]; color?: string; height?: number;
 }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
-  const w = 400; const h = height;
+
+  const w = 500;
+  const h = height;
+  const px = 20; // Padding so line endpoints don't touch card borders
+  const py = 20; // Vertical padding for top/bottom curve peaks
+
   const pts = data.map((v, i) => ({
-    x: (i / (data.length - 1)) * w,
-    y: h - ((v - min) / range) * (h - 10) - 5,
+    x: px + (i / (data.length - 1)) * (w - 2 * px),
+    y: h - py - ((v - min) / range) * (h - 2 * py),
+    val: v
   }));
-  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-  const areaD = `${pathD} L${pts[pts.length - 1].x},${h} L0,${h} Z`;
+
+  const lineD = getBezierPath(pts);
+  const areaD = `${lineD} L ${pts[pts.length - 1].x} ${h - 5} L ${pts[0].x} ${h - 5} Z`;
+  const gradId = `grad-${color.replace('#', '')}`;
+
+  // Grid levels (3 dotted lines)
+  const gridY = [0.25, 0.55, 0.85].map(ratio => h - py - ratio * (h - 2 * py));
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="ac-line-chart" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={`grad-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill={`url(#grad-${color.replace('#','')})`} />
-      <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {pts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3.5" fill={color} stroke="white" strokeWidth="1.5" />
-      ))}
-    </svg>
+    <div style={{ position: 'relative', width: '100%', padding: '4px 0' }}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="ac-line-chart" preserveAspectRatio="none" style={{ width: '100%', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <stop offset="65%" stopColor={color} stopOpacity="0.06" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+          <filter id={`glow-${gradId}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="3.5" floodColor={color} floodOpacity="0.28" />
+          </filter>
+        </defs>
+
+        {/* Dashed Horizontal Grid Lines */}
+        {gridY.map((y, idx) => (
+          <line
+            key={idx}
+            x1={px - 8}
+            y1={y}
+            x2={w - px + 8}
+            y2={y}
+            stroke="var(--ac-border)"
+            strokeDasharray="4 4"
+            strokeWidth="1"
+            opacity="0.6"
+          />
+        ))}
+
+        {/* Gradient Fill under curve */}
+        <path d={areaD} fill={`url(#${gradId})`} />
+
+        {/* Smooth Curved Spline Line */}
+        <path
+          d={lineD}
+          fill="none"
+          stroke={color}
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter={`url(#glow-${gradId})`}
+        />
+
+        {/* Points on Line */}
+        {pts.map((p, i) => {
+          const isHovered = hoveredIdx === i;
+          return (
+            <g
+              key={i}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+              style={{ cursor: 'pointer' }}
+            >
+              {/* Outer Pulse ring on hover */}
+              {isHovered && (
+                <circle cx={p.x} cy={p.y} r="10" fill={color} opacity="0.2" />
+              )}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={isHovered ? "6" : "4.5"}
+                fill="white"
+                stroke={color}
+                strokeWidth={isHovered ? "3.5" : "2.5"}
+                style={{ transition: 'all 0.15s ease-out' }}
+              />
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Hover Floating Tooltip */}
+      {hoveredIdx !== null && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `${(pts[hoveredIdx].x / w) * 100}%`,
+            top: `${(pts[hoveredIdx].y / h) * 100 - 18}%`,
+            transform: 'translate(-50%, -100%)',
+            background: 'var(--ac-text-primary)',
+            color: 'white',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            fontSize: '11.5px',
+            fontWeight: 800,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+            zIndex: 20
+          }}
+        >
+          ₹{pts[hoveredIdx].val.toLocaleString()}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -201,11 +312,11 @@ function DashboardTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
           <div className="ac-chart-title">Monthly Revenue Growth</div>
           <div className="ac-chart-subtitle">Platform MRR trend — last 7 months</div>
           <LineChart data={revenueChartData.map(d => d.revenue)} height={140} color="#6D28D9" />
-          <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${revenueChartData.length}, 1fr)`, marginTop: 14, width: '100%' }}>
             {revenueChartData.map(d => (
               <div key={d.month} style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('payments')}>
                 <div style={{ fontSize: 11, color: 'var(--ac-text-muted)', fontWeight: 600 }}>{d.month}</div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ac-text-secondary)' }}>₹{(d.revenue / 1000).toFixed(0)}K</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ac-text-primary)', marginTop: 2 }}>₹{(d.revenue / 1000).toFixed(0)}K</div>
               </div>
             ))}
           </div>
