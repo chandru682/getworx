@@ -10,7 +10,7 @@ import {
   Star, Activity, Server, Database, Mail, Cpu, HardDrive,
   Wifi, Package, Filter,
   UserPlus, Building, DollarSign, FileBarChart, ShieldCheck,
-  Hash, MapPin, Layers, Target
+  Hash, MapPin, Layers, Target, ShieldAlert
 } from 'lucide-react';
 import './AdminConsole.css';
 import {
@@ -1039,7 +1039,6 @@ function ReportsTab() {
       <div className="ac-table-wrapper">
         <div className="ac-table-header">
           <span className="ac-table-title">Available Reports</span>
-          <span className="ac-table-count">{reports.length}</span>
         </div>
         <div style={{ padding: '0 24px' }}>
           {reports.map((r, i) => (
@@ -1049,7 +1048,7 @@ function ReportsTab() {
                 <div className="ac-export-title">{r.title}</div>
                 <div className="ac-export-desc">{r.desc} · {r.size} · {r.date}</div>
               </div>
-              <button className="ac-btn ac-btn-secondary ac-btn-sm"><Download size={12} />Download</button>
+              <button className="ac-btn ac-btn-secondary ac-btn-sm" onClick={() => alert(`📥 Downloading ${r.title}...`)}><Download size={12} />Download</button>
             </div>
           ))}
         </div>
@@ -1095,84 +1094,218 @@ function SettingsTab() {
 }
 
 /* ═══════════════════════════════════════════════════
-   ROLES & PERMISSIONS TAB
+   ROLES & PERMISSIONS DATA
 ═══════════════════════════════════════════════════ */
+interface PermissionAction {
+  id: string;
+  name: string;
+  isDangerous?: boolean;
+}
+
+interface ModulePermission {
+  id: string;
+  name: string;
+  description: string;
+  actions: PermissionAction[];
+}
+
+const MODULE_PERMISSIONS: ModulePermission[] = [
+  { id: 'dashboard', name: 'Dashboard', description: 'Platform metrics, health widgets & charts', actions: [{ id: 'view', name: 'View' }, { id: 'export', name: 'Export' }, { id: 'refresh', name: 'Refresh Data' }, { id: 'customize', name: 'Customize' }] },
+  { id: 'companies', name: 'Companies', description: 'Employer accounts, company profiles & subscriptions', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'approve', name: 'Approve' }, { id: 'export', name: 'Export' }] },
+  { id: 'employers', name: 'Employers', description: 'Employer team admins & access controls', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'verify', name: 'Verify' }, { id: 'export', name: 'Export' }] },
+  { id: 'recruiters', name: 'Recruiters', description: 'Recruiter seats, activity tracking & hiring quotas', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'assign', name: 'Assign Jobs' }, { id: 'export', name: 'Export' }] },
+  { id: 'candidates', name: 'Candidates', description: 'Candidate talent pool, resumes & AI scores', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'verify', name: 'Verify' }, { id: 'export', name: 'Export' }] },
+  { id: 'jobs', name: 'Jobs', description: 'Job openings, status controls & applicant pipelines', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'publish', name: 'Publish' }, { id: 'close', name: 'Close' }, { id: 'archive', name: 'Archive' }, { id: 'approve', name: 'Approve' }] },
+  { id: 'applications', name: 'Applications', description: 'Submissions, hiring stages & offer approvals', actions: [{ id: 'view', name: 'View' }, { id: 'move_stage', name: 'Move Stage' }, { id: 'reject', name: 'Reject' }, { id: 'hire', name: 'Hire' }, { id: 'export', name: 'Export' }] },
+  { id: 'interviews', name: 'Interviews', description: 'Calendar scheduling, meeting links & scorecards', actions: [{ id: 'view', name: 'View' }, { id: 'schedule', name: 'Schedule' }, { id: 'reschedule', name: 'Reschedule' }, { id: 'cancel', name: 'Cancel' }, { id: 'feedback', name: 'Feedback' }] },
+  { id: 'reports', name: 'Reports & Analytics', description: 'Hiring metrics, financial reports & AI analytics', actions: [{ id: 'view', name: 'View' }, { id: 'export', name: 'Export CSV' }, { id: 'query', name: 'Custom Builder' }, { id: 'download_pdf', name: 'Download PDF' }] },
+  { id: 'payments', name: 'Payments', description: 'Stripe transactions, invoice records & refunds', actions: [{ id: 'view', name: 'View' }, { id: 'refund', name: 'Process Refunds', isDangerous: true }, { id: 'invoices', name: 'Manage Invoices' }, { id: 'export', name: 'Export' }] },
+  { id: 'subscriptions', name: 'Subscriptions', description: 'Platform billing plans, enterprise tiers & coupons', actions: [{ id: 'view', name: 'View' }, { id: 'change_plan', name: 'Change Plan' }, { id: 'cancel', name: 'Cancel Plan', isDangerous: true }, { id: 'coupons', name: 'Add Coupons' }] },
+  { id: 'support', name: 'Support', description: 'Helpdesk tickets, customer chat & SLA routing', actions: [{ id: 'view', name: 'View Tickets' }, { id: 'respond', name: 'Respond' }, { id: 'assign', name: 'Assign Agent' }, { id: 'close', name: 'Close Ticket' }, { id: 'escalate', name: 'Escalate' }] },
+  { id: 'notifications', name: 'Notifications', description: 'System announcements & email alert rules', actions: [{ id: 'view', name: 'View' }, { id: 'broadcast', name: 'Send Broadcast' }, { id: 'manage_alerts', name: 'Manage Rules' }] },
+  { id: 'settings', name: 'Settings', description: 'Global system configuration, auth & security', actions: [{ id: 'view', name: 'View' }, { id: 'edit_general', name: 'Edit General' }, { id: 'security', name: 'Security & Auth' }, { id: 'sso', name: 'Configure SSO' }, { id: 'domain', name: 'Domain Settings' }] },
+  { id: 'roles', name: 'Roles & Permissions', description: 'RBAC access control & admin privilege rules', actions: [{ id: 'view', name: 'View Roles' }, { id: 'create', name: 'Create Role' }, { id: 'edit', name: 'Edit Role' }, { id: 'delete', name: 'Delete Role', isDangerous: true }, { id: 'assign', name: 'Assign User Roles', isDangerous: true }] },
+  { id: 'audit', name: 'Audit Logs', description: 'System activity traces & compliance records', actions: [{ id: 'view', name: 'View Logs' }, { id: 'export', name: 'Export Logs' }, { id: 'purge', name: 'Purge Logs', isDangerous: true }] },
+  { id: 'ai_features', name: 'AI Features', description: 'AI Copilot, match algorithms & cost limits', actions: [{ id: 'view', name: 'View AI Metrics' }, { id: 'configure', name: 'Configure Prompts' }, { id: 'limits', name: 'Set Cost Limits' }] },
+  { id: 'billing', name: 'Billing', description: 'Corporate payment methods & invoice downloads', actions: [{ id: 'view', name: 'View Billing' }, { id: 'update_methods', name: 'Update Payment Methods' }, { id: 'invoices', name: 'Download Invoices' }] },
+  { id: 'departments', name: 'Departments', description: 'Organizational hierarchy & team structure', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete' }] },
+  { id: 'branches', name: 'Branches', description: 'Office locations & regional headquarters', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete' }, { id: 'assign', name: 'Assign Locations' }] },
+  { id: 'documents', name: 'Documents', description: 'Offer contracts, NDAs & compliance uploads', actions: [{ id: 'view', name: 'View' }, { id: 'upload', name: 'Upload' }, { id: 'delete', name: 'Delete', isDangerous: true }, { id: 'share', name: 'Share Document' }] },
+  { id: 'templates', name: 'Templates', description: 'Email templates, scorecard specs & specs', actions: [{ id: 'view', name: 'View' }, { id: 'create', name: 'Create' }, { id: 'edit', name: 'Edit' }, { id: 'delete', name: 'Delete' }] },
+  { id: 'api_keys', name: 'API Keys', description: 'Webhooks, API credentials & OAuth scopes', actions: [{ id: 'view', name: 'View Keys' }, { id: 'generate', name: 'Generate Key' }, { id: 'revoke', name: 'Revoke Key', isDangerous: true }, { id: 'scopes', name: 'Manage Scopes' }] },
+  { id: 'integrations', name: 'Integrations', description: 'Third-party ATS connectors, Slack & Workday', actions: [{ id: 'view', name: 'View Integrations' }, { id: 'connect', name: 'Connect App' }, { id: 'disconnect', name: 'Disconnect App', isDangerous: true }] }
+];
+
+const PRESETS: Record<string, string[]> = {
+  'Super Admin': MODULE_PERMISSIONS.flatMap(m => m.actions.map(a => `${m.id}:${a.id}`)),
+  'HR Admin': MODULE_PERMISSIONS.filter(m => ['dashboard', 'companies', 'employers', 'recruiters', 'candidates', 'jobs', 'applications', 'interviews', 'reports', 'departments', 'branches', 'documents', 'templates'].includes(m.id))
+    .flatMap(m => m.actions.map(a => `${m.id}:${a.id}`)),
+  'Recruiter Manager': MODULE_PERMISSIONS.filter(m => ['candidates', 'jobs', 'applications', 'interviews', 'reports', 'templates'].includes(m.id))
+    .flatMap(m => m.actions.map(a => `${m.id}:${a.id}`)),
+  'Finance Admin': MODULE_PERMISSIONS.filter(m => ['payments', 'subscriptions', 'billing', 'reports'].includes(m.id))
+    .flatMap(m => m.actions.map(a => `${m.id}:${a.id}`)),
+  'Support Admin': MODULE_PERMISSIONS.filter(m => ['support', 'notifications', 'candidates', 'recruiters'].includes(m.id))
+    .flatMap(m => m.actions.map(a => `${m.id}:${a.id}`)),
+  'Compliance Officer': MODULE_PERMISSIONS.filter(m => ['audit', 'roles', 'documents', 'settings'].includes(m.id))
+    .flatMap(m => m.actions.map(a => `${m.id}:${a.id}`))
+};
+
 function RolesTab() {
   const [roles, setRoles] = useState([
-    { name: 'Super Admin', users: 2, permissions: 'Full platform access', color: '#6D28D9', modules: ['Companies', 'Employers', 'Recruiters', 'Candidates', 'Jobs', 'Payments', 'AI Usage', 'Support', 'Settings', 'Audit'] },
-    { name: 'Operations Admin', users: 5, permissions: 'Companies, Jobs, Users, Reports', color: '#3B82F6', modules: ['Companies', 'Employers', 'Recruiters', 'Jobs'] },
-    { name: 'Finance Admin', users: 3, permissions: 'Payments, Subscriptions, Invoices', color: '#10B981', modules: ['Payments'] },
-    { name: 'Support Agent', users: 8, permissions: 'Support Center, Tickets, Read-only', color: '#F59E0B', modules: ['Support'] },
-    { name: 'Content Moderator', users: 4, permissions: 'Moderation, Jobs Review, Flagging', color: '#EF4444', modules: ['Jobs'] },
+    { name: 'Super Admin', code: 'SUPER_ADMIN', level: 'Super Admin', status: 'active', users: 2, permissions: 'Full platform access', color: '#6D28D9' },
+    { name: 'Operations Admin', code: 'OPS_ADMIN', level: 'Platform Admin', status: 'active', users: 5, permissions: 'Companies, Jobs, Users, Reports', color: '#3B82F6' },
+    { name: 'Finance Admin', code: 'FIN_ADMIN', level: 'Organization Admin', status: 'active', users: 3, permissions: 'Payments, Subscriptions, Invoices', color: '#10B981' },
+    { name: 'Support Agent', code: 'SUP_AGENT', level: 'Manager', status: 'active', users: 8, permissions: 'Support Center, Tickets, Read-only', color: '#F59E0B' },
+    { name: 'Content Moderator', code: 'MODERATOR', level: 'Custom', status: 'active', users: 4, permissions: 'Moderation, Jobs Review, Flagging', color: '#EF4444' },
   ]);
 
   const [showModal, setShowModal] = useState(false);
   const [editingRole, setEditingRole] = useState<any | null>(null);
 
-  // Form inputs state
-  const [roleName, setRoleName] = useState('');
-  const [rolePerms, setRolePerms] = useState('');
+  const [roleTitle, setRoleTitle] = useState('');
+  const [roleCode, setRoleCode] = useState('');
+  const [roleDesc, setRoleDesc] = useState('');
   const [roleColor, setRoleColor] = useState('#6D28D9');
-  const [selectedModules, setSelectedModules] = useState<string[]>(['Companies', 'Jobs']);
+  const [roleLevel, setRoleLevel] = useState('Organization Admin');
+  const [isActive, setIsActive] = useState(true);
+  const [cloneRole, setCloneRole] = useState('');
 
-  const allModules = ['Companies', 'Employers', 'Recruiters', 'Candidates', 'Jobs', 'Payments', 'AI Usage', 'Support', 'Settings', 'Audit'];
+  const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set(['dashboard:view', 'companies:view', 'jobs:view']));
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(MODULE_PERMISSIONS.map(m => m.id)));
+  const [searchQuery, setSearchQuery] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleTitleChange = (val: string) => {
+    setRoleTitle(val);
+    setRoleCode(val.trim().toUpperCase().replace(/[^A-Z0-9]/g, '_'));
+    if (validationError) setValidationError(null);
+  };
+
+  const handleCloneChange = (presetName: string) => {
+    setCloneRole(presetName);
+    if (PRESETS[presetName]) {
+      setSelectedPerms(new Set(PRESETS[presetName]));
+      if (validationError) setValidationError(null);
+    }
+  };
 
   const handleOpenCreate = () => {
     setEditingRole(null);
-    setRoleName('');
-    setRolePerms('');
+    setRoleTitle('');
+    setRoleCode('');
+    setRoleDesc('');
     setRoleColor('#6D28D9');
-    setSelectedModules(['Companies', 'Jobs']);
+    setRoleLevel('Organization Admin');
+    setIsActive(true);
+    setCloneRole('');
+    setSelectedPerms(new Set(['dashboard:view', 'companies:view', 'jobs:view']));
+    setExpandedModules(new Set(MODULE_PERMISSIONS.map(m => m.id)));
+    setSearchQuery('');
+    setValidationError(null);
     setShowModal(true);
   };
 
   const handleOpenEdit = (r: any) => {
     setEditingRole(r);
-    setRoleName(r.name);
-    setRolePerms(r.permissions);
+    setRoleTitle(r.name);
+    setRoleCode(r.code || r.name.toUpperCase().replace(/\s+/g, '_'));
+    setRoleDesc(r.permissions);
     setRoleColor(r.color);
-    setSelectedModules(r.modules || []);
+    setRoleLevel(r.level || 'Custom');
+    setIsActive(r.status !== 'inactive');
+    setCloneRole('');
+    setSelectedPerms(new Set(PRESETS[r.name] || ['dashboard:view', 'companies:view', 'jobs:view']));
+    setExpandedModules(new Set(MODULE_PERMISSIONS.map(m => m.id)));
+    setSearchQuery('');
+    setValidationError(null);
     setShowModal(true);
   };
 
-  const handleSaveRole = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roleName.trim()) return;
-
-    if (editingRole) {
-      setRoles(roles.map(r => r.name === editingRole.name ? {
-        ...r,
-        name: roleName,
-        permissions: rolePerms || 'Custom role permissions',
-        color: roleColor,
-        modules: selectedModules
-      } : r));
+  const toggleAction = (modId: string, actId: string) => {
+    const key = `${modId}:${actId}`;
+    const next = new Set(selectedPerms);
+    if (next.has(key)) {
+      next.delete(key);
     } else {
-      const newRoleObj = {
-        name: roleName,
-        users: 1,
-        permissions: rolePerms || 'Custom role permissions',
-        color: roleColor,
-        modules: selectedModules
-      };
-      setRoles([...roles, newRoleObj]);
+      next.add(key);
     }
+    setSelectedPerms(next);
+    if (validationError) setValidationError(null);
+  };
 
+  const toggleModuleExpand = (modId: string) => {
+    const next = new Set(expandedModules);
+    if (next.has(modId)) {
+      next.delete(modId);
+    } else {
+      next.add(modId);
+    }
+    setExpandedModules(next);
+  };
+
+  const handleSelectAll = () => {
+    const allKeys = MODULE_PERMISSIONS.flatMap(m => m.actions.map(a => `${m.id}:${a.id}`));
+    setSelectedPerms(new Set(allKeys));
+  };
+  const handleClearAll = () => setSelectedPerms(new Set());
+  const handleExpandAll = () => setExpandedModules(new Set(MODULE_PERMISSIONS.map(m => m.id)));
+  const handleCollapseAll = () => setExpandedModules(new Set());
+
+  const handleSave = (isDraft = false) => {
+    if (!roleTitle.trim()) {
+      setValidationError('Role Title is mandatory.');
+      return;
+    }
+    if (selectedPerms.size === 0) {
+      setValidationError('At least one permission must be selected.');
+      return;
+    }
+    const isDuplicate = roles.some(r => r.name.toLowerCase() === roleTitle.trim().toLowerCase() && (!editingRole || editingRole.name.toLowerCase() !== roleTitle.trim().toLowerCase()));
+    if (isDuplicate) {
+      setValidationError('Duplicate role names are not allowed.');
+      return;
+    }
+    const roleObj = {
+      name: roleTitle.trim(),
+      code: roleCode || roleTitle.trim().toUpperCase().replace(/[^A-Z0-9]/g, '_'),
+      level: roleLevel,
+      status: isDraft ? 'draft' : (isActive ? 'active' : 'inactive'),
+      users: editingRole ? editingRole.users : 1,
+      permissions: roleDesc.trim() || `${selectedPerms.size} active permissions`,
+      color: roleColor
+    };
+    if (editingRole) {
+      setRoles(roles.map(r => r.name === editingRole.name ? roleObj : r));
+    } else {
+      setRoles([...roles, roleObj]);
+    }
     setShowModal(false);
   };
 
-  const toggleModule = (mod: string) => {
-    if (selectedModules.includes(mod)) {
-      setSelectedModules(selectedModules.filter(m => m !== mod));
-    } else {
-      setSelectedModules([...selectedModules, mod]);
-    }
-  };
+  const filteredModules = MODULE_PERMISSIONS.filter(m => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    const matchModName = m.name.toLowerCase().includes(q);
+    const matchModDesc = m.description.toLowerCase().includes(q);
+    const matchActions = m.actions.some(a => a.name.toLowerCase().includes(q));
+    return matchModName || matchModDesc || matchActions;
+  });
+
+  const selectedModulesCount = MODULE_PERMISSIONS.filter(m =>
+    m.actions.some(a => selectedPerms.has(`${m.id}:${a.id}`))
+  ).length;
+
+  const hasDangerousSelected = Array.from(selectedPerms).some(key => {
+    const [modId, actId] = key.split(':');
+    const mod = MODULE_PERMISSIONS.find(m => m.id === modId);
+    const act = mod?.actions.find(a => a.id === actId);
+    return act?.isDangerous;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="ac-page-header">
-        <div><h1 className="ac-page-title">Roles & Permissions</h1><p className="ac-page-subtitle">Admin access control and feature permissions matrix</p></div>
+        <div><h1 className="ac-page-title">Roles & Permissions</h1><p className="ac-page-subtitle">Enterprise RBAC access control & granular feature permissions matrix</p></div>
         <div className="ac-page-actions">
           <button className="ac-btn ac-btn-primary" onClick={handleOpenCreate}><Plus size={14} />Create Role</button>
         </div>
@@ -1182,10 +1315,11 @@ function RolesTab() {
         <table className="ac-table">
           <thead>
             <tr>
-              <th>Role</th>
+              <th>Role & Code</th>
+              <th>Level</th>
               <th>Users</th>
               <th>Permissions</th>
-              {allModules.slice(0, 5).map(m => <th key={m}>{m}</th>)}
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -1193,25 +1327,18 @@ function RolesTab() {
             {roles.map((r, i) => (
               <tr key={i}>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: r.color, flexShrink: 0 }} />
-                    <span style={{ fontWeight: 700, color: 'var(--ac-text-primary)', fontSize: 13 }}>{r.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: r.color, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontWeight: 700, color: 'var(--ac-text-primary)', fontSize: 13.5 }}>{r.name}</div>
+                      <div style={{ fontSize: 10.5, fontFamily: 'monospace', color: 'var(--ac-text-muted)', marginTop: 2 }}>{r.code}</div>
+                    </div>
                   </div>
                 </td>
+                <td><Badge status="growth" label={r.level} /></td>
                 <td style={{ fontWeight: 700 }}>{r.users}</td>
                 <td style={{ fontSize: 12, color: 'var(--ac-text-muted)' }}>{r.permissions}</td>
-                {allModules.slice(0, 5).map(m => {
-                  const hasPerm = r.modules ? r.modules.includes(m) : (
-                    r.name === 'Super Admin' || (r.name === 'Operations Admin' && ['Companies','Jobs','Employers','Recruiters'].includes(m)) || (r.name === 'Finance Admin' && m === 'Payments')
-                  );
-                  return (
-                    <td key={m}>
-                      {hasPerm ?
-                        <CheckCircle2 size={14} style={{ color: 'var(--ac-success)' }} /> :
-                        <XCircle size={14} style={{ color: 'var(--ac-text-xmuted)' }} />}
-                    </td>
-                  );
-                })}
+                <td><Badge status={r.status} label={r.status.toUpperCase()} /></td>
                 <td>
                   <div className="ac-row-actions" style={{ opacity: 1 }}>
                     <button className="ac-action-btn" title="Edit Role" onClick={() => handleOpenEdit(r)}><Edit2 size={13} /></button>
@@ -1223,89 +1350,306 @@ function RolesTab() {
         </table>
       </div>
 
-      {/* Create / Edit Role Modal */}
       {showModal && (
         <div className="ac-modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="ac-modal-window">
+          <div className="ac-modal-window enterprise-role-modal">
+            
+            {/* Modal Header */}
             <div className="ac-modal-header">
-              <div className="ac-modal-title">{editingRole ? 'Edit Admin Role' : 'Create New Admin Role'}</div>
-              <button className="ac-modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ac-primary-light)', color: 'var(--ac-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Shield size={18} />
+                </div>
+                <div>
+                  <div className="ac-modal-title">{editingRole ? 'Edit Role & Permissions' : 'Create New Admin Role'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ac-text-muted)' }}>Configure granular enterprise access control & feature permissions</div>
+                </div>
+              </div>
+              <button className="ac-modal-close" onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
-            <form onSubmit={handleSaveRole}>
-              <div className="ac-modal-body">
-                <div className="ac-form-group">
-                  <label className="ac-form-label">Role Title *</label>
-                  <input
-                    className="ac-form-input"
-                    placeholder="e.g. Compliance Officer, Regional HR Lead"
-                    value={roleName}
-                    onChange={e => setRoleName(e.target.value)}
-                    required
-                  />
-                </div>
 
-                <div className="ac-form-group">
-                  <label className="ac-form-label">Permissions Description</label>
-                  <input
-                    className="ac-form-input"
-                    placeholder="e.g. Manage companies, review candidate profiles & export reports"
-                    value={rolePerms}
-                    onChange={e => setRolePerms(e.target.value)}
-                  />
-                </div>
+            {/* Validation Error Banner */}
+            {validationError && (
+              <div style={{ background: '#FEE2E2', borderBottom: '1px solid #FCA5A5', color: '#B91C1C', padding: '10px 24px', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={15} />
+                {validationError}
+              </div>
+            )}
 
-                <div className="ac-form-group">
-                  <label className="ac-form-label">Badge Color</label>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    {['#6D28D9', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'].map(c => (
-                      <div
-                        key={c}
-                        onClick={() => setRoleColor(c)}
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          background: c,
-                          cursor: 'pointer',
-                          border: roleColor === c ? '2px solid var(--ac-text-primary)' : '2px solid transparent',
-                          transform: roleColor === c ? 'scale(1.15)' : 'scale(1)',
-                          transition: 'all 0.15s'
-                        }}
+            {/* Modal Body Grid (Split View) */}
+            <div className="ac-role-modal-grid">
+              
+              {/* Left Column (Forms & Categorized Permissions) */}
+              <div className="ac-role-modal-left">
+                
+                {/* ── Section 1: General Information ── */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--ac-primary)', marginBottom: 12 }}>
+                    General Information
+                  </div>
+                  
+                  <div className="ac-form-grid-2col" style={{ marginBottom: 14 }}>
+                    <div className="ac-form-group">
+                      <label className="ac-form-label">Role Title *</label>
+                      <input
+                        className="ac-form-input"
+                        placeholder="e.g. Regional HR Director, Finance Auditor"
+                        value={roleTitle}
+                        onChange={e => handleTitleChange(e.target.value)}
+                        autoFocus
                       />
-                    ))}
+                    </div>
+                    <div className="ac-form-group">
+                      <label className="ac-form-label">Role Code (Auto-generated)</label>
+                      <input
+                        className="ac-form-input"
+                        placeholder="e.g. HR_ADMIN"
+                        style={{ fontFamily: 'monospace' }}
+                        value={roleCode}
+                        onChange={e => setRoleCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="ac-form-group" style={{ marginBottom: 14 }}>
+                    <label className="ac-form-label">Permissions Description</label>
+                    <input
+                      className="ac-form-input"
+                      placeholder="Brief description of responsibilities and scope..."
+                      value={roleDesc}
+                      onChange={e => setRoleDesc(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="ac-form-grid-3col">
+                    <div className="ac-form-group">
+                      <label className="ac-form-label">Role Level</label>
+                      <select className="ac-form-select" value={roleLevel} onChange={e => setRoleLevel(e.target.value)}>
+                        <option value="Super Admin">Super Admin</option>
+                        <option value="Platform Admin">Platform Admin</option>
+                        <option value="Organization Admin">Organization Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Read Only">Read Only</option>
+                        <option value="Custom">Custom</option>
+                      </select>
+                    </div>
+
+                    <div className="ac-form-group">
+                      <label className="ac-form-label">Clone Existing Role</label>
+                      <select className="ac-form-select" value={cloneRole} onChange={e => handleCloneChange(e.target.value)}>
+                        <option value="">Select template...</option>
+                        <option value="Super Admin">Super Admin</option>
+                        <option value="HR Admin">HR Admin</option>
+                        <option value="Recruiter Manager">Recruiter Manager</option>
+                        <option value="Finance Admin">Finance Admin</option>
+                        <option value="Support Admin">Support Admin</option>
+                        <option value="Compliance Officer">Compliance Officer</option>
+                      </select>
+                    </div>
+
+                    <div className="ac-form-group">
+                      <label className="ac-form-label">Status Toggle</label>
+                      <div className="ac-switch-container">
+                        <div className={`ac-switch ${isActive ? 'active' : ''}`} onClick={() => setIsActive(!isActive)}>
+                          <div className="ac-switch-handle" />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'var(--ac-success)' : 'var(--ac-text-muted)' }}>
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="ac-form-group" style={{ marginTop: 14 }}>
+                    <label className="ac-form-label">Badge Color</label>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      {['#6D28D9', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#4F46E5'].map(c => (
+                        <div
+                          key={c}
+                          onClick={() => setRoleColor(c)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            background: c,
+                            cursor: 'pointer',
+                            border: roleColor === c ? '2px solid var(--ac-text-primary)' : '2px solid transparent',
+                            transform: roleColor === c ? 'scale(1.2)' : 'scale(1)',
+                            transition: 'all 0.15s'
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="ac-form-group">
-                  <label className="ac-form-label">Module Permissions</label>
-                  <div className="ac-checkbox-grid">
-                    {allModules.map(m => {
-                      const isChecked = selectedModules.includes(m);
+                <hr style={{ border: 'none', borderTop: '1px solid var(--ac-border)', margin: '4px 0' }} />
+
+                {/* ── Section 2: Permission Management ── */}
+                <div>
+                  <div className="ac-quick-action-bar-top">
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--ac-primary)' }}>
+                        Permission Management ({MODULE_PERMISSIONS.length} Modules)
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--ac-text-muted)', marginTop: 2 }}>Select granular view, edit, delete & admin permissions</div>
+                    </div>
+
+                    <div className="ac-qa-btn-group">
+                      <button type="button" className="ac-qa-pill-btn" onClick={handleSelectAll}>Select All</button>
+                      <button type="button" className="ac-qa-pill-btn" onClick={handleClearAll}>Clear All</button>
+                      <button type="button" className="ac-qa-pill-btn" onClick={handleExpandAll}>Expand All</button>
+                      <button type="button" className="ac-qa-pill-btn" onClick={handleCollapseAll}>Collapse All</button>
+                    </div>
+                  </div>
+
+                  {/* Search Box */}
+                  <div className="ac-search-box" style={{ width: '100%', marginBottom: 16, background: 'var(--ac-bg-main)' }}>
+                    <Search size={14} style={{ color: 'var(--ac-text-muted)' }} />
+                    <input
+                      placeholder="Search modules or permissions..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ac-text-muted)' }}>
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Categorized Permission Cards List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {filteredModules.map(mod => {
+                      const isExpanded = expandedModules.has(mod.id);
+                      const modSelectedCount = mod.actions.filter(a => selectedPerms.has(`${mod.id}:${a.id}`)).length;
+                      const hasSelected = modSelectedCount > 0;
+
                       return (
-                        <div
-                          key={m}
-                          className={`ac-checkbox-label ${isChecked ? 'selected' : ''}`}
-                          onClick={() => toggleModule(m)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {}}
-                            style={{ cursor: 'pointer' }}
-                          />
-                          <span>{m}</span>
+                        <div key={mod.id} className={`ac-perm-card ${hasSelected ? 'has-selected' : ''}`}>
+                          
+                          {/* Card Header */}
+                          <div className="ac-perm-card-header" onClick={() => toggleModuleExpand(mod.id)}>
+                            <div>
+                              <div className="ac-perm-card-title">
+                                {mod.name}
+                                <span className={`ac-perm-count-badge ${hasSelected ? 'active' : ''}`}>
+                                  {modSelectedCount}/{mod.actions.length} selected
+                                </span>
+                              </div>
+                              <div className="ac-perm-card-desc">{mod.description}</div>
+                            </div>
+                            <ChevronDown
+                              size={16}
+                              style={{
+                                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.2s',
+                                color: 'var(--ac-text-muted)'
+                              }}
+                            />
+                          </div>
+
+                          {/* Card Action Checkboxes */}
+                          {isExpanded && (
+                            <div className="ac-perm-actions-grid">
+                              {mod.actions.map(act => {
+                                const key = `${mod.id}:${act.id}`;
+                                const isChecked = selectedPerms.has(key);
+                                return (
+                                  <div
+                                    key={act.id}
+                                    className={`ac-action-chip ${isChecked ? 'selected' : ''} ${act.isDangerous ? 'dangerous' : ''}`}
+                                    onClick={() => toggleAction(mod.id, act.id)}
+                                    title={act.isDangerous ? '⚠️ High-privilege administrative action' : ''}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {}}
+                                      style={{ cursor: 'pointer', accentColor: act.isDangerous ? '#EF4444' : '#6D28D9' }}
+                                    />
+                                    <span>{act.name}</span>
+                                    {act.isDangerous && <ShieldAlert size={12} style={{ marginLeft: 'auto', color: '#EF4444' }} />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 </div>
+
               </div>
 
-              <div className="ac-modal-footer">
-                <button type="button" className="ac-btn ac-btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="ac-btn ac-btn-primary">{editingRole ? 'Save Changes' : 'Create Role'}</button>
+              {/* Right Column (Live Summary Panel & High-Privilege Warning) */}
+              <div className="ac-role-modal-right">
+                <div style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--ac-text-primary)' }}>
+                  Role Summary
+                </div>
+
+                <div className="ac-summary-card">
+                  <div className="ac-summary-row">
+                    <span className="ac-summary-label">Role Code:</span>
+                    <span className="ac-summary-value" style={{ fontFamily: 'monospace', color: 'var(--ac-primary)' }}>{roleCode || 'UNASSIGNED'}</span>
+                  </div>
+                  <div className="ac-summary-row">
+                    <span className="ac-summary-label">Access Level:</span>
+                    <Badge status="growth" label={roleLevel} />
+                  </div>
+                  <div className="ac-summary-row">
+                    <span className="ac-summary-label">Status:</span>
+                    <span className="ac-summary-value" style={{ color: isActive ? 'var(--ac-success)' : 'var(--ac-text-muted)' }}>
+                      {isActive ? '● Active' : '○ Inactive'}
+                    </span>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px dashed var(--ac-border)', margin: '4px 0' }} />
+                  <div className="ac-summary-row">
+                    <span className="ac-summary-label">Selected Modules:</span>
+                    <span className="ac-summary-value" style={{ fontSize: 15 }}>{selectedModulesCount} / {MODULE_PERMISSIONS.length}</span>
+                  </div>
+                  <div className="ac-summary-row">
+                    <span className="ac-summary-label">Selected Permissions:</span>
+                    <span className="ac-summary-value" style={{ fontSize: 16, color: 'var(--ac-primary)' }}>{selectedPerms.size}</span>
+                  </div>
+                </div>
+
+                {/* Warning Banner */}
+                {hasDangerousSelected && (
+                  <div className="ac-warning-banner">
+                    <AlertTriangle size={24} style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontWeight: 800 }}>High-Level Privileges</div>
+                      <div style={{ fontSize: 11.5, marginTop: 2, opacity: 0.9 }}>
+                        This role has high-level administrative privileges.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: 11.5, color: 'var(--ac-text-muted)', lineHeight: 1.5, marginTop: 'auto', background: 'var(--ac-card)', padding: 12, borderRadius: 8, border: '1px solid var(--ac-border)' }}>
+                  💡 <strong>Security Note:</strong> Enterprise role assignments take effect immediately upon saving. Users assigned to this role will inherit all granted permissions.
+                </div>
               </div>
-            </form>
+
+            </div>
+
+            {/* Modal Footer Buttons */}
+            <div className="ac-modal-footer">
+              <button type="button" className="ac-btn ac-btn-secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+                <button type="button" className="ac-btn" style={{ background: 'var(--ac-card)', border: '1px solid var(--ac-border)', color: 'var(--ac-text-secondary)' }} onClick={() => handleSave(true)}>
+                  Save as Draft
+                </button>
+                <button type="button" className="ac-btn ac-btn-primary" onClick={() => handleSave(false)}>
+                  {editingRole ? 'Save Changes' : 'Create Role'}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
