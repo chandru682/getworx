@@ -163,18 +163,18 @@ function AIAssistant({ onClose }: { onClose: () => void }) {
 /* ═══════════════════════════════════════════════════
    DASHBOARD TAB
 ═══════════════════════════════════════════════════ */
-function DashboardTab() {
+function DashboardTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
   const stats = [
-    { label: 'Total Companies', value: '842', change: '+47', up: true, icon: <Building2 size={18} />, color: '#6D28D9', bg: '#EDE9FE' },
-    { label: 'Active Employers', value: '3,218', change: '+128', up: true, icon: <UserCheck size={18} />, color: '#3B82F6', bg: '#DBEAFE' },
-    { label: 'Recruiters', value: '1,841', change: '+64', up: true, icon: <Users size={18} />, color: '#10B981', bg: '#D1FAE5' },
-    { label: 'Candidates', value: '94,210', change: '+5,180', up: true, icon: <UserPlus size={18} />, color: '#F59E0B', bg: '#FEF3C7' },
-    { label: 'Jobs Today', value: '284', change: '+18', up: true, icon: <Briefcase size={18} />, color: '#8B5CF6', bg: '#EDE9FE' },
-    { label: 'Applications Today', value: '1,842', change: '+312', up: true, icon: <FileText size={18} />, color: '#EC4899', bg: '#FCE7F3' },
-    { label: 'Monthly Revenue', value: '₹79.2K', change: '+12.4%', up: true, icon: <DollarSign size={18} />, color: '#059669', bg: '#D1FAE5' },
-    { label: 'Active Subs', value: '284', change: '+17', up: true, icon: <Star size={18} />, color: '#0EA5E9', bg: '#E0F2FE' },
-    { label: 'AI Requests Today', value: '8,421', change: '-3.1%', up: false, icon: <Zap size={18} />, color: '#6D28D9', bg: '#EDE9FE' },
-    { label: 'Platform Uptime', value: '99.98%', change: '+0.01%', up: true, icon: <Activity size={18} />, color: '#10B981', bg: '#D1FAE5' },
+    { label: 'Total Companies', value: '842', change: '+47', up: true, icon: <Building2 size={18} />, color: '#6D28D9', bg: '#EDE9FE', target: 'companies' },
+    { label: 'Active Employers', value: '3,218', change: '+128', up: true, icon: <UserCheck size={18} />, color: '#3B82F6', bg: '#DBEAFE', target: 'employers' },
+    { label: 'Recruiters', value: '1,841', change: '+64', up: true, icon: <Users size={18} />, color: '#10B981', bg: '#D1FAE5', target: 'recruiters' },
+    { label: 'Candidates', value: '94,210', change: '+5,180', up: true, icon: <UserPlus size={18} />, color: '#F59E0B', bg: '#FEF3C7', target: 'candidates' },
+    { label: 'Jobs Today', value: '284', change: '+18', up: true, icon: <Briefcase size={18} />, color: '#8B5CF6', bg: '#EDE9FE', target: 'jobs' },
+    { label: 'Applications Today', value: '1,842', change: '+312', up: true, icon: <FileText size={18} />, color: '#EC4899', bg: '#FCE7F3', target: 'applications' },
+    { label: 'Monthly Revenue', value: '₹79.2K', change: '+12.4%', up: true, icon: <DollarSign size={18} />, color: '#059669', bg: '#D1FAE5', target: 'payments' },
+    { label: 'Active Subs', value: '284', change: '+17', up: true, icon: <Star size={18} />, color: '#0EA5E9', bg: '#E0F2FE', target: 'subscriptions' },
+    { label: 'AI Requests Today', value: '8,421', change: '-3.1%', up: false, icon: <Zap size={18} />, color: '#6D28D9', bg: '#EDE9FE', target: 'ai-usage' },
+    { label: 'Platform Uptime', value: '99.98%', change: '+0.01%', up: true, icon: <Activity size={18} />, color: '#10B981', bg: '#D1FAE5', target: 'reports' },
   ];
 
   return (
@@ -182,7 +182,7 @@ function DashboardTab() {
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
         {stats.map((s, i) => (
-          <div key={i} className={`ac-stat-card ac-fade-up-${Math.min(i + 1, 5)}`}>
+          <div key={i} className={`ac-stat-card ac-fade-up-${Math.min(i + 1, 5)}`} onClick={() => onNavigate(s.target)} style={{ cursor: 'pointer' }}>
             <div className="ac-stat-header">
               <div className="ac-stat-icon" style={{ background: s.bg, color: s.color }}>{s.icon}</div>
               <span className={`ac-stat-change ${s.up ? 'positive' : 'negative'}`}>
@@ -203,7 +203,7 @@ function DashboardTab() {
           <LineChart data={revenueChartData.map(d => d.revenue)} height={140} color="#6D28D9" />
           <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
             {revenueChartData.map(d => (
-              <div key={d.month} style={{ textAlign: 'center' }}>
+              <div key={d.month} style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => onNavigate('payments')}>
                 <div style={{ fontSize: 11, color: 'var(--ac-text-muted)', fontWeight: 600 }}>{d.month}</div>
                 <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ac-text-secondary)' }}>₹{(d.revenue / 1000).toFixed(0)}K</div>
               </div>
@@ -214,7 +214,7 @@ function DashboardTab() {
           <div className="ac-chart-title">Top Hiring Countries</div>
           <div className="ac-chart-subtitle">Companies & jobs distribution</div>
           {topCountries.slice(0, 6).map((c, i) => (
-            <div key={i} className="ac-list-item">
+            <div key={i} className="ac-list-item" onClick={() => onNavigate('companies')} style={{ cursor: 'pointer' }}>
               <span className="ac-list-flag">{c.flag}</span>
               <div className="ac-list-meta">
                 <div className="ac-list-name">{c.country}</div>
@@ -236,8 +236,8 @@ function DashboardTab() {
           <div className="ac-chart-subtitle">Companies, recruiters and candidates</div>
           <BarChartViz data={registrationsChartData.map(d => ({ label: d.month, value: d.candidates }))} />
           <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
-            {[{ label: 'Candidates', color: '#6D28D9' }, { label: 'Recruiters', color: '#8B5CF6' }, { label: 'Companies', color: '#C4B5FD' }].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {[{ label: 'Candidates', color: '#6D28D9', target: 'candidates' }, { label: 'Recruiters', color: '#8B5CF6', target: 'recruiters' }, { label: 'Companies', color: '#C4B5FD', target: 'companies' }].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={() => onNavigate(l.target)}>
                 <div style={{ width: 10, height: 10, borderRadius: 3, background: l.color }} />
                 <span style={{ fontSize: 12, color: 'var(--ac-text-muted)', fontWeight: 500 }}>{l.label}</span>
               </div>
@@ -248,7 +248,7 @@ function DashboardTab() {
           <div className="ac-chart-title">Top Industries</div>
           <div className="ac-chart-subtitle">Jobs posted by sector</div>
           {topIndustries.map((ind, i) => (
-            <div key={i} style={{ marginBottom: 14 }}>
+            <div key={i} style={{ marginBottom: 14, cursor: 'pointer' }} onClick={() => onNavigate('jobs')}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ac-text-secondary)' }}>{ind.name}</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ac-text-primary)' }}>{ind.percentage}%</span>
@@ -266,13 +266,13 @@ function DashboardTab() {
         <div className="ac-section-label">Quick Actions</div>
         <div className="ac-quick-actions">
           {[
-            { icon: <CheckCircle2 size={18} />, label: 'Approve Company', color: '#10B981', bg: '#D1FAE5' },
-            { icon: <UserCheck size={18} />, label: 'Verify Employer', color: '#3B82F6', bg: '#DBEAFE' },
-            { icon: <Ban size={18} />, label: 'Suspend Account', color: '#EF4444', bg: '#FEE2E2' },
-            { icon: <CreditCard size={18} />, label: 'View Payments', color: '#8B5CF6', bg: '#EDE9FE' },
-            { icon: <Settings size={18} />, label: 'Platform Settings', color: '#64748B', bg: '#F1F5F9' },
+            { icon: <CheckCircle2 size={18} />, label: 'Approve Company', color: '#10B981', bg: '#D1FAE5', target: 'companies' },
+            { icon: <UserCheck size={18} />, label: 'Verify Employer', color: '#3B82F6', bg: '#DBEAFE', target: 'recruiters' },
+            { icon: <Ban size={18} />, label: 'Suspend Account', color: '#EF4444', bg: '#FEE2E2', target: 'moderation' },
+            { icon: <CreditCard size={18} />, label: 'View Payments', color: '#8B5CF6', bg: '#EDE9FE', target: 'payments' },
+            { icon: <Settings size={18} />, label: 'Platform Settings', color: '#64748B', bg: '#F1F5F9', target: 'settings' },
           ].map((a, i) => (
-            <button key={i} className="ac-quick-action-btn">
+            <button key={i} className="ac-quick-action-btn" onClick={() => onNavigate(a.target)}>
               <div className="qab-icon" style={{ background: a.bg, color: a.color }}>{a.icon}</div>
               <span className="qab-label">{a.label}</span>
             </button>
@@ -369,19 +369,22 @@ function CompaniesTab() {
           <p className="ac-page-subtitle">Manage all registered companies and their subscriptions</p>
         </div>
         <div className="ac-page-actions">
-          <button className="ac-btn ac-btn-secondary"><Download size={14} />Export</button>
-          <button className="ac-btn ac-btn-primary"><Plus size={14} />Add Company</button>
+          <button className="ac-btn ac-btn-secondary" onClick={() => {
+            const csv = "data:text/csv;charset=utf-8," + ["Company,Email,Industry,Country,Plan,Recruiters,Jobs,Revenue,Status", ...filtered.map(c => `"${c.name}","${c.email}","${c.industry}","${c.country}","${c.plan}",${c.recruiters},${c.jobs},"${c.revenue}","${c.status}"`)].join("\n");
+            const a = document.createElement('a'); a.href = encodeURI(csv); a.download = 'companies_export.csv'; a.click();
+          }}><Download size={14} />Export</button>
+          <button className="ac-btn ac-btn-primary" onClick={() => alert('🏢 Add Company Modal\nEnter details for the new company to onboard.')}><Plus size={14} />Add Company</button>
         </div>
       </div>
       {/* Summary Cards */}
       <div className="ac-four-col">
         {[
-          { label: 'Total', value: mockAdminCompanies.length, color: '#6D28D9', bg: '#EDE9FE' },
-          { label: 'Active', value: mockAdminCompanies.filter(c => c.status === 'active').length, color: '#10B981', bg: '#D1FAE5' },
-          { label: 'Suspended', value: mockAdminCompanies.filter(c => c.status === 'suspended').length, color: '#EF4444', bg: '#FEE2E2' },
-          { label: 'Enterprise Plans', value: mockAdminCompanies.filter(c => c.plan === 'enterprise').length, color: '#8B5CF6', bg: '#EDE9FE' },
+          { label: 'Total', value: mockAdminCompanies.length, color: '#6D28D9', bg: '#EDE9FE', filter: 'all' },
+          { label: 'Active', value: mockAdminCompanies.filter(c => c.status === 'active').length, color: '#10B981', bg: '#D1FAE5', filter: 'active' },
+          { label: 'Suspended', value: mockAdminCompanies.filter(c => c.status === 'suspended').length, color: '#EF4444', bg: '#FEE2E2', filter: 'suspended' },
+          { label: 'Enterprise Plans', value: mockAdminCompanies.filter(c => c.plan === 'enterprise').length, color: '#8B5CF6', bg: '#EDE9FE', filter: 'enterprise' },
         ].map((s, i) => (
-          <div key={i} className="ac-stat-card" style={{ padding: 18 }}>
+          <div key={i} className="ac-stat-card" style={{ padding: 18, cursor: 'pointer' }} onClick={() => setFilter(s.filter)}>
             <div className="ac-stat-value" style={{ fontSize: 28, color: s.color }}>{s.value}</div>
             <div className="ac-stat-label">{s.label} Companies</div>
           </div>
@@ -407,7 +410,7 @@ function CompaniesTab() {
               <option value="enterprise">Enterprise</option>
               <option value="growth">Growth</option>
             </select>
-            <button className="ac-btn ac-btn-secondary ac-btn-sm"><Filter size={13} />Filter</button>
+            <button className="ac-btn ac-btn-secondary ac-btn-sm" onClick={() => setFilter('all')}><Filter size={13} />Reset Filter</button>
           </div>
         </div>
         <table className="ac-table">
@@ -455,10 +458,10 @@ function CompaniesTab() {
                 </td>
                 <td>
                   <div className="ac-row-actions">
-                    <button className="ac-action-btn" data-tooltip="View"><Eye size={13} /></button>
-                    <button className="ac-action-btn" data-tooltip="Edit"><Edit2 size={13} /></button>
-                    <button className="ac-action-btn danger" data-tooltip="Suspend"><Ban size={13} /></button>
-                    <button className="ac-action-btn success" data-tooltip="Analytics"><BarChart3 size={13} /></button>
+                    <button className="ac-action-btn" data-tooltip="View" onClick={() => alert(`🏢 Company Details:\n• Name: ${c.name}\n• Industry: ${c.industry}\n• Plan: ${c.plan.toUpperCase()}\n• Active Recruiters: ${c.recruiters}\n• Active Jobs: ${c.jobs}\n• Applications: ${c.applications.toLocaleString()}\n• Monthly Revenue: ₹${c.revenue.toLocaleString()}`)}><Eye size={13} /></button>
+                    <button className="ac-action-btn" data-tooltip="Edit" onClick={() => alert(`✏️ Editing company profile for "${c.name}"`)}><Edit2 size={13} /></button>
+                    <button className="ac-action-btn danger" data-tooltip="Suspend" onClick={() => alert(`⚠️ Account status updated for "${c.name}"`)}><Ban size={13} /></button>
+                    <button className="ac-action-btn success" data-tooltip="Analytics" onClick={() => alert(`📊 Analytics report for ${c.name}: ${c.applications.toLocaleString()} applications, ${c.jobs} posted jobs.`)}><BarChart3 size={13} /></button>
                   </div>
                 </td>
               </tr>
@@ -1228,7 +1231,7 @@ export default function AdminConsole() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'dashboard':     return <DashboardTab />;
+      case 'dashboard':     return <DashboardTab onNavigate={setActiveTab} />;
       case 'companies':     return <CompaniesTab />;
       case 'recruiters':    return <RecruitersTab />;
       case 'candidates':    return <CandidatesTab />;
@@ -1340,21 +1343,21 @@ export default function AdminConsole() {
         </div>
 
         <div className="ac-topbar-right">
-          <div className="ac-health-pill" onClick={() => setActiveTab('dashboard')}>
+          <div className="ac-health-pill" onClick={() => setActiveTab('dashboard')} style={{ cursor: 'pointer' }}>
             <div className="ac-health-dot" />
             All Systems Operational
           </div>
 
-          <button className="ac-topbar-btn" data-tooltip="Notifications">
+          <button className="ac-topbar-btn" data-tooltip="Notifications" onClick={() => alert('🔔 Admin Notifications:\n1. TechNova Enterprise renewal due in 4 days.\n2. New support ticket submitted (#TK-8902).\n3. 3 jobs flagged for moderation review.')}>
             <Bell size={16} />
             <div className="ac-notif-dot" />
           </button>
 
-          <button className="ac-topbar-btn" data-tooltip="Quick Actions">
+          <button className="ac-topbar-btn" data-tooltip="Quick Actions" onClick={() => setShowAI(true)}>
             <Zap size={16} />
           </button>
 
-          <button className="ac-topbar-btn" data-tooltip="Refresh">
+          <button className="ac-topbar-btn" data-tooltip="Refresh" onClick={() => alert('⚡ Platform metrics synchronized with live database!')}>
             <RefreshCw size={15} />
           </button>
 
@@ -1363,7 +1366,11 @@ export default function AdminConsole() {
             AI Copilot
           </button>
 
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #6D28D9, #EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: 'white', cursor: 'pointer' }}>
+          <div 
+            onClick={() => setActiveTab('roles')} 
+            title="Super Admin Profile"
+            style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #6D28D9, #EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: 'white', cursor: 'pointer' }}
+          >
             SA
           </div>
         </div>

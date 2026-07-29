@@ -146,7 +146,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => onNavigate('applicants')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon-wrapper coral">
             <Award size={20} />
           </div>
@@ -159,7 +159,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => onNavigate('reports')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon-wrapper slate">
             <Clock size={20} />
           </div>
@@ -172,7 +172,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => onNavigate('reports')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon-wrapper purple">
             <TrendingUp size={20} />
           </div>
@@ -303,7 +303,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               {tasks.filter(t => t.status !== 'completed').length > 0 ? (
                 <div className="tasks-dashboard-list">
                   {tasks.filter(t => t.status !== 'completed').slice(0, 5).map(task => (
-                    <div key={task.id} className="task-dashboard-item">
+                    <div key={task.id} className="task-dashboard-item" onClick={() => onNavigate('tasks')} style={{ cursor: 'pointer' }}>
                       <div className="task-checkbox-label">
                         <CheckSquare size={16} className={`task-checkbox-icon ${task.priority}`} />
                         <div className="task-content">
