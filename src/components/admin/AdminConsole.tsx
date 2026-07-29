@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LayoutDashboard, Building2, Users, Briefcase, FileText,
   CreditCard, Zap, HeadphonesIcon, Megaphone, BarChart3,
@@ -1840,6 +1840,23 @@ const NAV_SECTIONS = [
 export default function AdminConsole() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAI, setShowAI] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+
+  const searchResults = useMemo(() => {
+    const q = globalSearchQuery.toLowerCase().trim();
+    if (!q) return { companies: [], recruiters: [], candidates: [], jobs: [], payments: [] };
+
+    return {
+      companies: mockAdminCompanies.filter(c => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q) || c.plan.toLowerCase().includes(q)).slice(0, 3),
+      recruiters: mockAdminRecruiters.filter(r => r.name.toLowerCase().includes(q) || r.company.toLowerCase().includes(q)).slice(0, 3),
+      candidates: mockAdminCandidates.filter(c => c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q)).slice(0, 3),
+      jobs: mockAdminJobs.filter(j => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q) || j.location.toLowerCase().includes(q)).slice(0, 3),
+      payments: mockAdminTransactions.filter(p => p.id.toLowerCase().includes(q) || p.company.toLowerCase().includes(q) || p.plan.toLowerCase().includes(q)).slice(0, 3)
+    };
+  }, [globalSearchQuery]);
+
+  const totalResultsCount = searchResults.companies.length + searchResults.recruiters.length + searchResults.candidates.length + searchResults.jobs.length + searchResults.payments.length;
 
   const renderTab = () => {
     switch (activeTab) {
@@ -1949,9 +1966,144 @@ export default function AdminConsole() {
 
       {/* ── Top Bar ── */}
       <header className="ac-topbar">
-        <div className="ac-topbar-search">
+        <div className="ac-topbar-search" style={{ position: 'relative' }}>
           <Search size={14} className="search-icon" />
-          <input placeholder="Search companies, users, jobs, invoices..." />
+          <input 
+            placeholder="Search companies, users, jobs, invoices..." 
+            value={globalSearchQuery}
+            onChange={e => {
+              setGlobalSearchQuery(e.target.value);
+              setIsGlobalSearchOpen(true);
+            }}
+            onFocus={() => setIsGlobalSearchOpen(true)}
+            onBlur={() => setTimeout(() => setIsGlobalSearchOpen(false), 200)}
+          />
+          {globalSearchQuery && (
+            <button 
+              onClick={() => { setGlobalSearchQuery(''); setIsGlobalSearchOpen(false); }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ac-text-muted)', display: 'flex', alignItems: 'center', padding: '0 4px' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+
+          {/* Instant Search Dropdown */}
+          {isGlobalSearchOpen && globalSearchQuery.trim() !== '' && (
+            <div className="ac-search-dropdown-overlay" onMouseDown={e => e.preventDefault()}>
+              <div className="ac-search-dropdown-header">
+                <span>Found {totalResultsCount} results for "{globalSearchQuery}"</span>
+                <button className="ac-search-close-btn" onClick={() => setIsGlobalSearchOpen(false)}>Esc</button>
+              </div>
+
+              {totalResultsCount === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--ac-text-muted)', fontSize: 13 }}>
+                  No records matched your search query.
+                </div>
+              ) : (
+                <div className="ac-search-results-list">
+                  {/* Companies */}
+                  {searchResults.companies.length > 0 && (
+                    <div className="ac-search-group">
+                      <div className="ac-search-group-title">Companies ({searchResults.companies.length})</div>
+                      {searchResults.companies.map(item => (
+                        <div 
+                          key={item.id} 
+                          className="ac-search-item"
+                          onClick={() => { setActiveTab('companies'); setIsGlobalSearchOpen(false); setGlobalSearchQuery(''); }}
+                        >
+                          <Building2 size={15} style={{ color: 'var(--ac-primary)' }} />
+                          <div>
+                            <div className="ac-search-item-title">{item.name}</div>
+                            <div className="ac-search-item-sub">{item.industry} · {item.plan} plan</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Recruiters */}
+                  {searchResults.recruiters.length > 0 && (
+                    <div className="ac-search-group">
+                      <div className="ac-search-group-title">Recruiters ({searchResults.recruiters.length})</div>
+                      {searchResults.recruiters.map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="ac-search-item"
+                          onClick={() => { setActiveTab('recruiters'); setIsGlobalSearchOpen(false); setGlobalSearchQuery(''); }}
+                        >
+                          <Users size={15} style={{ color: '#3B82F6' }} />
+                          <div>
+                            <div className="ac-search-item-title">{item.name}</div>
+                            <div className="ac-search-item-sub">{item.company} · {item.jobsCreated} jobs</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Candidates */}
+                  {searchResults.candidates.length > 0 && (
+                    <div className="ac-search-group">
+                      <div className="ac-search-group-title">Candidates ({searchResults.candidates.length})</div>
+                      {searchResults.candidates.map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="ac-search-item"
+                          onClick={() => { setActiveTab('candidates'); setIsGlobalSearchOpen(false); setGlobalSearchQuery(''); }}
+                        >
+                          <UserPlus size={15} style={{ color: '#10B981' }} />
+                          <div>
+                            <div className="ac-search-item-title">{item.name}</div>
+                            <div className="ac-search-item-sub">{item.location} · {item.experience}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Jobs */}
+                  {searchResults.jobs.length > 0 && (
+                    <div className="ac-search-group">
+                      <div className="ac-search-group-title">Jobs ({searchResults.jobs.length})</div>
+                      {searchResults.jobs.map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="ac-search-item"
+                          onClick={() => { setActiveTab('jobs'); setIsGlobalSearchOpen(false); setGlobalSearchQuery(''); }}
+                        >
+                          <Briefcase size={15} style={{ color: '#F59E0B' }} />
+                          <div>
+                            <div className="ac-search-item-title">{item.title}</div>
+                            <div className="ac-search-item-sub">{item.company} · {item.location}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Payments */}
+                  {searchResults.payments.length > 0 && (
+                    <div className="ac-search-group">
+                      <div className="ac-search-group-title">Payments & Invoices ({searchResults.payments.length})</div>
+                      {searchResults.payments.map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="ac-search-item"
+                          onClick={() => { setActiveTab('payments'); setIsGlobalSearchOpen(false); setGlobalSearchQuery(''); }}
+                        >
+                          <CreditCard size={15} style={{ color: '#EC4899' }} />
+                          <div>
+                            <div className="ac-search-item-title">{item.id} — {item.company}</div>
+                            <div className="ac-search-item-sub">₹{item.amount.toLocaleString()} · {item.date}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="ac-topbar-right">

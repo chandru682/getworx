@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -67,6 +67,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
   // Global search input state
   const [globalSearch, setGlobalSearch] = useState('');
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
 
   // AI Copilot Panel State
   const [showAiAssistant, setShowAiAssistant] = useState(false);
@@ -83,7 +84,19 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
   const [threads, setThreads] = useState<MessageThread[]>(mockThreads);
   const [notifications, setNotifications] = useState<RecruiterNotification[]>(mockNotifications);
   
-  // Local active tab routing (maps parent tab to local tab)
+  const globalSearchResults = useMemo(() => {
+    const q = globalSearch.toLowerCase().trim();
+    if (!q) return { candidates: [], jobs: [], interviews: [], tasks: [] };
+
+    return {
+      candidates: candidates.filter((c: Candidate) => c.name.toLowerCase().includes(q) || c.currentDesignation.toLowerCase().includes(q) || c.skills.some((s: string) => s.toLowerCase().includes(q))).slice(0, 4),
+      jobs: jobs.filter((j: RecruiterJob) => j.title.toLowerCase().includes(q) || j.department.toLowerCase().includes(q) || j.location.toLowerCase().includes(q)).slice(0, 4),
+      interviews: interviews.filter((i: Interview) => i.candidateName.toLowerCase().includes(q) || i.type.toLowerCase().includes(q)).slice(0, 3),
+      tasks: tasks.filter((t: Task) => t.title.toLowerCase().includes(q) || (t.candidateName && t.candidateName.toLowerCase().includes(q))).slice(0, 3)
+    };
+  }, [globalSearch, candidates, jobs, interviews, tasks]);
+
+  const totalRecruiterResults = globalSearchResults.candidates.length + globalSearchResults.jobs.length + globalSearchResults.interviews.length + globalSearchResults.tasks.length;
   const [localTab, setLocalTab] = useState<string>('dashboard');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
@@ -408,15 +421,116 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
         {/* Top Navbar */}
         <header className="workspace-top-bar">
           {/* Global Search Bar */}
-          <div className="global-search-wrapper">
+          <div className="global-search-wrapper" style={{ position: 'relative' }}>
             <Search size={18} />
             <input 
               type="text" 
               placeholder="Global Search: candidates, jobs, skills..." 
               value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value);
+                setIsGlobalSearchOpen(true);
+              }}
+              onFocus={() => setIsGlobalSearchOpen(true)}
+              onBlur={() => setTimeout(() => setIsGlobalSearchOpen(false), 200)}
               className="font-sans"
             />
+            {globalSearch && (
+              <button 
+                onClick={() => { setGlobalSearch(''); setIsGlobalSearchOpen(false); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ed-text-muted)', display: 'flex', alignItems: 'center', padding: '0 6px' }}
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Recruiter Live Search Dropdown Overlay */}
+            {isGlobalSearchOpen && globalSearch.trim() !== '' && (
+              <div className="recruiter-search-dropdown" onMouseDown={e => e.preventDefault()}>
+                <div className="recruiter-search-header">
+                  <span>Found {totalRecruiterResults} matches for "{globalSearch}"</span>
+                  <button onClick={() => setIsGlobalSearchOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--ed-text-muted)' }}>Esc</button>
+                </div>
+
+                {totalRecruiterResults === 0 ? (
+                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--ed-text-muted)', fontSize: 13 }}>
+                    No records matched your search criteria.
+                  </div>
+                ) : (
+                  <div className="recruiter-search-list">
+                    {/* Candidates */}
+                    {globalSearchResults.candidates.length > 0 && (
+                      <div className="recruiter-search-group">
+                        <div className="recruiter-search-group-title">Applicants ({globalSearchResults.candidates.length})</div>
+                        {globalSearchResults.candidates.map((c: Candidate) => (
+                          <div 
+                            key={c.id} 
+                            className="recruiter-search-item"
+                            onClick={() => {
+                              setSelectedCandidate(c);
+                              handleTabChange('applicants');
+                              setIsGlobalSearchOpen(false);
+                            }}
+                          >
+                            <img src={c.photoUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                            <div>
+                              <div className="recruiter-search-item-title">{c.name}</div>
+                              <div className="recruiter-search-item-sub">{c.currentDesignation} · {c.currentCompany}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Jobs */}
+                    {globalSearchResults.jobs.length > 0 && (
+                      <div className="recruiter-search-group">
+                        <div className="recruiter-search-group-title">Jobs ({globalSearchResults.jobs.length})</div>
+                        {globalSearchResults.jobs.map((j: RecruiterJob) => (
+                          <div 
+                            key={j.id} 
+                            className="recruiter-search-item"
+                            onClick={() => {
+                              handleTabChange('jobs');
+                              setIsGlobalSearchOpen(false);
+                            }}
+                          >
+                            <Briefcase size={16} style={{ color: 'var(--ed-accent)' }} />
+                            <div>
+                              <div className="recruiter-search-item-title">{j.title}</div>
+                              <div className="recruiter-search-item-sub">{j.department} · {j.location}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Interviews */}
+                    {globalSearchResults.interviews.length > 0 && (
+                      <div className="recruiter-search-group">
+                        <div className="recruiter-search-group-title">Interviews ({globalSearchResults.interviews.length})</div>
+                        {globalSearchResults.interviews.map((i: Interview) => (
+                          <div 
+                            key={i.id} 
+                            className="recruiter-search-item"
+                            onClick={() => {
+                              handleTabChange('interviews');
+                              setIsGlobalSearchOpen(false);
+                            }}
+                          >
+                            <CalendarIcon size={16} style={{ color: '#10B981' }} />
+                            <div>
+                              <div className="recruiter-search-item-title">{i.candidateName} — {i.type}</div>
+                              <div className="recruiter-search-item-sub">{i.date} at {i.time}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Quick Header Widgets */}
