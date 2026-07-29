@@ -111,13 +111,13 @@
    ========================================================================== */
 .ed-sidebar {
   width: 270px;
-  height: calc(100vh - 72px);
+  height: calc(120vh - 72px);
   background: var(--ed-bg-card);
   border-right: 1px solid var(--ed-border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 24px 16px;
+  padding: 0;
   position: sticky;
   top: 72px;
   flex-shrink: 0;
@@ -133,41 +133,73 @@
 .sidebar-top-section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 0;
+  width: 100%;
+}
+
+.brand-header-box {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ed-border);
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--ed-bg-card);
+}
+
+.ed-sidebar.collapsed .brand-header-box {
+  justify-content: center;
+  padding: 0;
 }
 
 .brand-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 8px;
+  gap: 10px;
+  width: 100%;
   overflow: hidden;
+  cursor: pointer;
+  user-select: none;
 }
 
-.brand-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--ed-radius-sm);
-  background: linear-gradient(135deg, var(--ed-primary), var(--ed-accent));
-  color: #ffffff;
+.ed-sidebar.collapsed .brand-header {
+  justify-content: center;
+}
+
+.brand-text-group {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 20px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(109, 40, 217, 0.2);
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .brand-name {
   font-weight: 800;
-  font-size: 16px;
+  font-size: 19px;
   color: var(--ed-text-primary);
-  white-space: nowrap;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.8px;
+  font-family: var(--font-sans);
+  line-height: 1;
 }
 
-.ed-sidebar.collapsed .brand-name {
+.brand-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--ed-primary) 0%, #4c1d95 100%);
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25);
+}
+
+.ed-sidebar.collapsed .brand-name,
+.ed-sidebar.collapsed .brand-badge {
   display: none;
 }
 
@@ -175,6 +207,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 16px 12px;
+  overflow-y: auto;
 }
 
 .ed-sidebar-item {
@@ -225,16 +259,16 @@
 .sidebar-footer-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
+  padding: 12px;
+  border-top: 1px solid var(--ed-border);
 }
 
 .user-profile-widget {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 8px;
-  border-top: 1px solid var(--ed-border);
-  padding-top: 16px;
+  padding: 8px;
   overflow: hidden;
 }
 
@@ -397,11 +431,12 @@
 
 .workspace-main-viewport {
   flex-grow: 1;
-  padding: 32px;
+  padding: 32px 32px 60px 32px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background-color: var(--ed-bg-main);
 }
 
 .workspace-main-viewport.no-padding {
@@ -4864,3 +4899,135 @@
   flex-direction: column;
   gap: 22px;
 }
+
+/* ==========================================================================
+   RECRUITER DASHBOARD RESPONSIVE BREAKPOINTS (Desktop, Tablet, Mobile)
+   ========================================================================== */
+
+/* Laptop & Desktop (1024px - 1440px+) */
+@media (min-width: 1024px) {
+  .stats-cards-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ed-sidebar {
+    width: 78px !important;
+  }
+  .ed-sidebar .brand-title,
+  .ed-sidebar .nav-item-text,
+  .ed-sidebar .nav-badge,
+  .ed-sidebar .recruiter-user-details,
+  .ed-sidebar .sidebar-section-title {
+    display: none !important;
+  }
+  .stats-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .recruiter-main-layout {
+    flex-direction: row;
+  }
+  .messages-layout {
+    grid-template-columns: 280px 1fr !important;
+  }
+}
+
+/* Mobile (<768px) Down to 320px */
+@media (max-width: 767px) {
+  .recruiter-main-layout {
+    flex-direction: column !important;
+  }
+
+  /* Sidebar Hidden on Mobile */
+  .ed-sidebar {
+    display: none !important;
+  }
+
+  /* 1-Column Cards Grid for Mobile */
+  .stats-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .stat-card {
+    border-radius: 18px !important;
+    padding: 16px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+  }
+
+  /* Quick Actions Bar Responsive Stack */
+  .quick-actions-bar {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+
+  .quick-actions-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .quick-action-btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+  }
+
+  /* Form Layout Single Column */
+  .recruiter-form-grid,
+  .form-row,
+  .two-column-form {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 15px !important;
+    min-height: 48px !important;
+  }
+
+  /* Messages Split View Mobile Stack */
+  .messages-layout {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Pipeline Kanban Container Touch Scroll */
+  .pipeline-board {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 16px !important;
+    padding-bottom: 16px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .pipeline-column {
+    min-width: 280px !important;
+    max-width: 300px !important;
+  }
+
+  /* Table records card transformation */
+  .recruiter-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Primary CTAs on Mobile */
+  .recruiter-primary-btn,
+  .btn-primary,
+  .btn-submit {
+    width: 100% !important;
+    min-height: 48px !important;
+    border-radius: 12px !important;
+  }
+}
+

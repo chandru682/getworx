@@ -37,7 +37,6 @@
   color: var(--ed-text-primary);
   font-family: var(--font-sans);
   position: relative;
-  overflow: hidden;
 }
 
 /* Sidebar Layout */
@@ -51,16 +50,18 @@
   justify-content: space-between;
   padding: 24px 16px;
   position: sticky;
-  top: 72px;
+  top: 2px;
   flex-shrink: 0;
   z-index: 100;
   box-shadow: var(--ed-shadow-sidebar);
 }
 
-.ed-sidebar-nav {
+.employer-dashboard-container .ed-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 0;
+  margin: 0;
 }
 
 .ed-sidebar-item {
@@ -149,10 +150,11 @@
 /* Content Pane */
 .ed-content-pane {
   flex: 1;
-  padding: 32px 40px;
-  overflow-y: auto;
-  height: calc(100vh - 72px);
+  padding: 32px 40px 60px 40px;
+  min-height: calc(100vh - 72px);
+  background-color: var(--ed-bg-main);
   position: relative;
+  overflow-y: auto;
 }
 
 /* Typography Overrides inside Dashboard */

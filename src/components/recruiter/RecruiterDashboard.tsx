@@ -47,6 +47,7 @@ import { ReportsTab } from './ReportsTab';
 import { NotificationsTab } from './NotificationsTab';
 import { ProfileTab } from './ProfileTab';
 import { CreateJobTab } from './CreateJobTab';
+import { GetWorxsLogo } from '../GetWorxsLogo';
 
 import './RecruiterDashboard.css';
 
@@ -335,9 +336,16 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
       {/* Sticky Collapsible Left Sidebar */}
       <aside className={`ed-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-top-section">
-          <div className="brand-header">
-            <div className="brand-logo">G</div>
-            <span className="brand-name">GetWorxs Recruit</span>
+          <div className="brand-header-box">
+            <div className="brand-header" onClick={() => handleTabChange('dashboard')}>
+              <GetWorxsLogo size="sm" showText={false} />
+              {!sidebarCollapsed && (
+                <div className="brand-text-group">
+                  <span className="brand-name">getworxs</span>
+                  <span className="brand-badge">Recruit</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Navigation Links */}

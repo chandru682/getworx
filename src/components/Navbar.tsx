@@ -76,6 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const navbarRightRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -559,9 +560,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav className="navbar">
       <div className="navbar-left">
+        <button 
+          className="mobile-hamburger-btn"
+          onClick={() => setIsMobileDrawerOpen(true)}
+          title="Open Menu"
+          aria-label="Open Navigation Menu"
+        >
+          <Menu size={22} />
+        </button>
         <GetWorxsLogo onClick={() => handleNavClick('home')} />
 
-        <ul className="navbar-menu">
+        <ul className="navbar-menu hide-mobile">
           {/* Home */}
           <li className="navbar-item">
             <a 
@@ -1108,6 +1117,111 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mobile Sliding Drawer Navigation Overlay */}
+      {isMobileDrawerOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setIsMobileDrawerOpen(false)}>
+          <div className="mobile-drawer-content" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-drawer-header">
+              <GetWorxsLogo onClick={() => { handleNavClick('home'); setIsMobileDrawerOpen(false); }} />
+              <button 
+                className="mobile-drawer-close-btn"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                title="Close Menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mobile-drawer-body">
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'home' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('home'); setIsMobileDrawerOpen(false); }}
+              >
+                <Sparkles size={18} />
+                <span>Dashboard</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('jobs'); setIsMobileDrawerOpen(false); }}
+              >
+                <Briefcase size={18} />
+                <span>Jobs</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'profile' && activeSubTab === 'dashboard' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('profile', 'dashboard'); setIsMobileDrawerOpen(false); }}
+              >
+                <UserCheck size={18} />
+                <span>Candidates</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'resources' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('resources', 'ai-interview'); setIsMobileDrawerOpen(false); }}
+              >
+                <Sparkles size={18} style={{ color: 'var(--color-primary)' }} />
+                <span>AI Hiring</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'recruiter' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('recruiter'); setIsMobileDrawerOpen(false); }}
+              >
+                <FileText size={18} />
+                <span>Interviews & Portal</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'employer' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('employer'); setIsMobileDrawerOpen(false); }}
+              >
+                <Building2 size={18} />
+                <span>Analytics & Employer</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'companies' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('companies'); setIsMobileDrawerOpen(false); }}
+              >
+                <Globe size={18} />
+                <span>Company Directory</span>
+              </button>
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'admin' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('admin'); setIsMobileDrawerOpen(false); }}
+              >
+                <Settings size={18} style={{ color: '#ff1744' }} />
+                <span>Platform Console</span>
+              </button>
+
+              <div className="mobile-drawer-divider" />
+
+              <button 
+                className={`mobile-drawer-nav-item ${activeTab === 'profile' && activeSubTab === 'settings' ? 'active' : ''}`}
+                onClick={() => { handleNavClick('profile', 'settings'); setIsMobileDrawerOpen(false); }}
+              >
+                <Settings size={18} />
+                <span>Settings</span>
+              </button>
+            </div>
+
+            <div className="mobile-drawer-footer">
+              <button 
+                className="mobile-drawer-nav-item"
+                style={{ color: 'var(--color-accent)' }}
+                onClick={() => { handleNavClick('home'); setIsMobileDrawerOpen(false); }}
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
