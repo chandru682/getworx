@@ -1098,31 +1098,94 @@ function SettingsTab() {
    ROLES & PERMISSIONS TAB
 ═══════════════════════════════════════════════════ */
 function RolesTab() {
-  const roles = [
-    { name: 'Super Admin', users: 2, permissions: 'Full platform access', color: '#6D28D9' },
-    { name: 'Operations Admin', users: 5, permissions: 'Companies, Jobs, Users, Reports', color: '#3B82F6' },
-    { name: 'Finance Admin', users: 3, permissions: 'Payments, Subscriptions, Invoices', color: '#10B981' },
-    { name: 'Support Agent', users: 8, permissions: 'Support Center, Tickets, Read-only', color: '#F59E0B' },
-    { name: 'Content Moderator', users: 4, permissions: 'Moderation, Jobs Review, Flagging', color: '#EF4444' },
-  ];
-  const modules = ['Companies', 'Employers', 'Recruiters', 'Candidates', 'Jobs', 'Payments', 'AI Usage', 'Support', 'Settings', 'Audit'];
+  const [roles, setRoles] = useState([
+    { name: 'Super Admin', users: 2, permissions: 'Full platform access', color: '#6D28D9', modules: ['Companies', 'Employers', 'Recruiters', 'Candidates', 'Jobs', 'Payments', 'AI Usage', 'Support', 'Settings', 'Audit'] },
+    { name: 'Operations Admin', users: 5, permissions: 'Companies, Jobs, Users, Reports', color: '#3B82F6', modules: ['Companies', 'Employers', 'Recruiters', 'Jobs'] },
+    { name: 'Finance Admin', users: 3, permissions: 'Payments, Subscriptions, Invoices', color: '#10B981', modules: ['Payments'] },
+    { name: 'Support Agent', users: 8, permissions: 'Support Center, Tickets, Read-only', color: '#F59E0B', modules: ['Support'] },
+    { name: 'Content Moderator', users: 4, permissions: 'Moderation, Jobs Review, Flagging', color: '#EF4444', modules: ['Jobs'] },
+  ]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingRole, setEditingRole] = useState<any | null>(null);
+
+  // Form inputs state
+  const [roleName, setRoleName] = useState('');
+  const [rolePerms, setRolePerms] = useState('');
+  const [roleColor, setRoleColor] = useState('#6D28D9');
+  const [selectedModules, setSelectedModules] = useState<string[]>(['Companies', 'Jobs']);
+
+  const allModules = ['Companies', 'Employers', 'Recruiters', 'Candidates', 'Jobs', 'Payments', 'AI Usage', 'Support', 'Settings', 'Audit'];
+
+  const handleOpenCreate = () => {
+    setEditingRole(null);
+    setRoleName('');
+    setRolePerms('');
+    setRoleColor('#6D28D9');
+    setSelectedModules(['Companies', 'Jobs']);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (r: any) => {
+    setEditingRole(r);
+    setRoleName(r.name);
+    setRolePerms(r.permissions);
+    setRoleColor(r.color);
+    setSelectedModules(r.modules || []);
+    setShowModal(true);
+  };
+
+  const handleSaveRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleName.trim()) return;
+
+    if (editingRole) {
+      setRoles(roles.map(r => r.name === editingRole.name ? {
+        ...r,
+        name: roleName,
+        permissions: rolePerms || 'Custom role permissions',
+        color: roleColor,
+        modules: selectedModules
+      } : r));
+    } else {
+      const newRoleObj = {
+        name: roleName,
+        users: 1,
+        permissions: rolePerms || 'Custom role permissions',
+        color: roleColor,
+        modules: selectedModules
+      };
+      setRoles([...roles, newRoleObj]);
+    }
+
+    setShowModal(false);
+  };
+
+  const toggleModule = (mod: string) => {
+    if (selectedModules.includes(mod)) {
+      setSelectedModules(selectedModules.filter(m => m !== mod));
+    } else {
+      setSelectedModules([...selectedModules, mod]);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="ac-page-header">
         <div><h1 className="ac-page-title">Roles & Permissions</h1><p className="ac-page-subtitle">Admin access control and feature permissions matrix</p></div>
         <div className="ac-page-actions">
-          <button className="ac-btn ac-btn-primary"><Plus size={14} />Create Role</button>
+          <button className="ac-btn ac-btn-primary" onClick={handleOpenCreate}><Plus size={14} />Create Role</button>
         </div>
       </div>
       <div className="ac-table-wrapper">
-        <div className="ac-table-header"><span className="ac-table-title">Admin Roles</span></div>
+        <div className="ac-table-header"><span className="ac-table-title">Admin Roles ({roles.length})</span></div>
         <table className="ac-table">
           <thead>
             <tr>
               <th>Role</th>
               <th>Users</th>
               <th>Permissions</th>
-              {modules.slice(0, 5).map(m => <th key={m}>{m}</th>)}
+              {allModules.slice(0, 5).map(m => <th key={m}>{m}</th>)}
               <th>Actions</th>
             </tr>
           </thead>
@@ -1137,21 +1200,115 @@ function RolesTab() {
                 </td>
                 <td style={{ fontWeight: 700 }}>{r.users}</td>
                 <td style={{ fontSize: 12, color: 'var(--ac-text-muted)' }}>{r.permissions}</td>
-                {modules.slice(0, 5).map(m => (
-                  <td key={m}>
-                    {(r.name === 'Super Admin' || (r.name === 'Operations Admin' && ['Companies','Jobs','Employers','Recruiters'].includes(m))) ?
-                      <CheckCircle2 size={14} style={{ color: 'var(--ac-success)' }} /> :
-                      (r.name === 'Finance Admin' && m === 'Payments') ?
-                      <CheckCircle2 size={14} style={{ color: 'var(--ac-success)' }} /> :
-                      <XCircle size={14} style={{ color: 'var(--ac-text-xmuted)' }} />}
-                  </td>
-                ))}
-                <td><div className="ac-row-actions" style={{ opacity: 1 }}><button className="ac-action-btn"><Edit2 size={13} /></button></div></td>
+                {allModules.slice(0, 5).map(m => {
+                  const hasPerm = r.modules ? r.modules.includes(m) : (
+                    r.name === 'Super Admin' || (r.name === 'Operations Admin' && ['Companies','Jobs','Employers','Recruiters'].includes(m)) || (r.name === 'Finance Admin' && m === 'Payments')
+                  );
+                  return (
+                    <td key={m}>
+                      {hasPerm ?
+                        <CheckCircle2 size={14} style={{ color: 'var(--ac-success)' }} /> :
+                        <XCircle size={14} style={{ color: 'var(--ac-text-xmuted)' }} />}
+                    </td>
+                  );
+                })}
+                <td>
+                  <div className="ac-row-actions" style={{ opacity: 1 }}>
+                    <button className="ac-action-btn" title="Edit Role" onClick={() => handleOpenEdit(r)}><Edit2 size={13} /></button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Create / Edit Role Modal */}
+      {showModal && (
+        <div className="ac-modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="ac-modal-window">
+            <div className="ac-modal-header">
+              <div className="ac-modal-title">{editingRole ? 'Edit Admin Role' : 'Create New Admin Role'}</div>
+              <button className="ac-modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
+            </div>
+            <form onSubmit={handleSaveRole}>
+              <div className="ac-modal-body">
+                <div className="ac-form-group">
+                  <label className="ac-form-label">Role Title *</label>
+                  <input
+                    className="ac-form-input"
+                    placeholder="e.g. Compliance Officer, Regional HR Lead"
+                    value={roleName}
+                    onChange={e => setRoleName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="ac-form-group">
+                  <label className="ac-form-label">Permissions Description</label>
+                  <input
+                    className="ac-form-input"
+                    placeholder="e.g. Manage companies, review candidate profiles & export reports"
+                    value={rolePerms}
+                    onChange={e => setRolePerms(e.target.value)}
+                  />
+                </div>
+
+                <div className="ac-form-group">
+                  <label className="ac-form-label">Badge Color</label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {['#6D28D9', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'].map(c => (
+                      <div
+                        key={c}
+                        onClick={() => setRoleColor(c)}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: c,
+                          cursor: 'pointer',
+                          border: roleColor === c ? '2px solid var(--ac-text-primary)' : '2px solid transparent',
+                          transform: roleColor === c ? 'scale(1.15)' : 'scale(1)',
+                          transition: 'all 0.15s'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ac-form-group">
+                  <label className="ac-form-label">Module Permissions</label>
+                  <div className="ac-checkbox-grid">
+                    {allModules.map(m => {
+                      const isChecked = selectedModules.includes(m);
+                      return (
+                        <div
+                          key={m}
+                          className={`ac-checkbox-label ${isChecked ? 'selected' : ''}`}
+                          onClick={() => toggleModule(m)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {}}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          <span>{m}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="ac-modal-footer">
+                <button type="button" className="ac-btn ac-btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="ac-btn ac-btn-primary">{editingRole ? 'Save Changes' : 'Create Role'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
