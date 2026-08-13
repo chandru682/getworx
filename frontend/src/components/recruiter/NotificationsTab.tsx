@@ -7,10 +7,9 @@ import {
   Trash2, 
   Calendar
 } from 'lucide-react';
-import type { RecruiterNotification } from './types';
 
 interface NotificationsTabProps {
-  notifications: RecruiterNotification[];
+  notifications: any[];
   onMarkRead: (notifId: string) => void;
   onClearAll: () => void;
 }
@@ -24,7 +23,12 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
 
   const filteredNotifs = notifications.filter(n => {
     if (activeCategory === 'all') return true;
-    return n.category === activeCategory;
+    const typeStr = (n.type || '').toLowerCase();
+    if (activeCategory === 'ai') return typeStr.includes('ai_recommendation');
+    if (activeCategory === 'reminder') return typeStr.includes('reminder');
+    if (activeCategory === 'applicant') return typeStr.includes('applicant') || typeStr.includes('application');
+    if (activeCategory === 'general') return !typeStr.includes('ai') && !typeStr.includes('reminder') && !typeStr.includes('applic');
+    return true;
   });
 
   const getIcon = (type: string) => {
@@ -82,7 +86,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
             {filteredNotifs.map(notif => (
               <div 
                 key={notif.id} 
-                className={`notif-list-item ${notif.read ? 'read' : 'unread'}`}
+                className={`notif-list-item ${notif.is_read ? 'read' : 'unread'}`}
               >
                 <div className="item-icon-wrapper">
                   {getIcon(notif.type)}
@@ -91,12 +95,14 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
                 <div className="item-body">
                   <div className="title-row">
                     <h4>{notif.title}</h4>
-                    <span className="time">{notif.time}</span>
+                    <span className="time">
+                      {new Date(notif.created_at).toLocaleDateString()} {new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
                   </div>
                   <p>{notif.message}</p>
                 </div>
 
-                {!notif.read && (
+                {!notif.is_read && (
                   <button className="mark-read-btn" onClick={() => onMarkRead(notif.id)} title="Mark as Read">
                     <Check size={14} />
                   </button>

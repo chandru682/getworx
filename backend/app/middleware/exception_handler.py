@@ -1,4 +1,5 @@
 from fastapi import Request, FastAPI, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -34,14 +35,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content={
+            content=jsonable_encoder({
                 "success": False,
                 "error": {
                     "code": "VALIDATION_ERROR",
                     "message": "Invalid input parameters",
                     "details": exc.errors(),
                 },
-            },
+            }),
         )
 
     @app.exception_handler(StarletteHTTPException)
@@ -63,6 +64,11 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
+        import traceback
+        print("\n" + "="*50)
+        print(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}:")
+        traceback.print_exc()
+        print("="*50 + "\n")
         logger.error(
             f"Unhandled Server Error on {request.method} {request.url.path}: {exc}",
             exc_info=True,

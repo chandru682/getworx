@@ -21,14 +21,13 @@ import {
   FileText,
   LogOut
 } from 'lucide-react';
-import type { RecruiterJob, Candidate, Interview, Task, MessageThread, RecruiterNotification } from './types';
+import type { RecruiterJob, Candidate, Interview, Task, MessageThread } from './types';
 import { 
   mockJobs, 
   mockCandidates, 
   mockInterviews, 
   mockTasks, 
   mockThreads, 
-  mockNotifications,
   mockRecruiterProfile
 } from './mockData';
 
@@ -45,9 +44,11 @@ import { MessagesTab } from './MessagesTab';
 import { TasksTab } from './TasksTab';
 import { ReportsTab } from './ReportsTab';
 import { NotificationsTab } from './NotificationsTab';
-import { ProfileTab } from './ProfileTab';
 import { CreateJobTab } from './CreateJobTab';
+import { ProfileTab } from './ProfileTab';
+import { TalentSearchTab } from '../employer/TalentSearchTab';
 import { GetWorxsLogo } from '../GetWorxsLogo';
+import { useNotifications } from '../../utils/useNotifications';
 
 import './RecruiterDashboard.css';
 
@@ -82,7 +83,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
   const [interviews, setInterviews] = useState<Interview[]>(mockInterviews);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [threads, setThreads] = useState<MessageThread[]>(mockThreads);
-  const [notifications, setNotifications] = useState<RecruiterNotification[]>(mockNotifications);
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   
   const globalSearchResults = useMemo(() => {
     const q = globalSearch.toLowerCase().trim();
@@ -118,6 +119,134 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
     }
   }, [prefillName, threads]);
 
+  const fetchRecruiterJobs = async () => {
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const API_URL = rawUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+    const token = localStorage.getItem('getworxs_access_token') || localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/jobs?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data && Array.isArray(data.data.items)) {
+          const mapped = data.data.items.map((j: any) => ({
+            id: String(j.id),
+            title: j.title,
+            department: j.department || 'Engineering',
+            location: j.city ? `${j.city}, ${j.country}` : j.country,
+            type: j.employment_type || 'Full-Time',
+            experience: `${j.experience_min}-${j.experience_max} yrs`,
+            postedDate: j.created_at ? new Date(j.created_at).toLocaleDateString() : 'Recent',
+            status: (j.status || 'active').toLowerCase(),
+            applicantCount: typeof j.applications_count === 'number' ? j.applications_count : 0,
+            assignedRecruiter: j.hiring_manager_name || 'HR Team'
+          }));
+          setJobs(mapped);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch recruiter jobs:', err);
+    }
+  };
+
+  const fetchRecruiterApplications = async () => {
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const API_URL = rawUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+    const token = localStorage.getItem('getworxs_access_token') || localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/applications/recruiter?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data && Array.isArray(data.data.items)) {
+          const jobAppCounts: Record<string, number> = {};
+          const mapped = data.data.items.map((app: any) => {
+            const nameStr = app.candidate?.name || 'Candidate';
+            
+            const jobIdStr = String(app.job_id);
+            jobAppCounts[jobIdStr] = (jobAppCounts[jobIdStr] || 0) + 1;
+
+            const statusMap: Record<string, string> = {
+              'Applied': 'applied',
+              'Viewed': 'screening',
+              'Shortlisted': 'shortlisted',
+              'Interview Scheduled': 'interview1',
+              'Interview Completed': 'interview2',
+              'Selected': 'final',
+              'Offer Sent': 'offer',
+              'Hired': 'joined',
+              'Rejected': 'rejected',
+              'Withdrawn': 'rejected'
+            };
+            
+            const currentStage = statusMap[app.status] || 'applied';
+
+            const skillsArr = app.candidate?.candidate_profile?.skills_json 
+              ? (typeof app.candidate.candidate_profile.skills_json === 'string' 
+                  ? JSON.parse(app.candidate.candidate_profile.skills_json) 
+                  : app.candidate.candidate_profile.skills_json) 
+              : (app.candidate?.candidate_profile?.skills || ['React', 'TypeScript']);
+
+            const recruiterNotes = (app.notes_json || []).map((n: string, i: number) => ({
+              id: `rec-note-${i}-${app.id}`,
+              author: 'Assigned Recruiter',
+              text: n,
+              date: new Date().toISOString().split('T')[0]
+            }));
+
+            const activityTimeline = (app.status_history_json || []).map((hist: any, i: number) => ({
+              id: `act-${i}-${app.id}`,
+              event: hist.status,
+              time: hist.changed_at ? new Date(hist.changed_at).toLocaleDateString() : 'Just Now',
+              details: hist.note || `Status updated to ${hist.status}`
+            }));
+
+            return {
+              id: String(app.id),
+              name: nameStr,
+              avatar: nameStr.split(' ').map((n: any) => n[0]).slice(0, 2).join('').toUpperCase(),
+              email: app.candidate?.email || '',
+              phone: app.candidate?.phone || app.candidate?.candidate_profile?.phone || '',
+              location: app.candidate?.candidate_profile?.city 
+                ? `${app.candidate.candidate_profile.city}, ${app.candidate.candidate_profile.country}` 
+                : (app.candidate?.candidate_profile?.country || 'Remote'),
+              currentStage: currentStage as any,
+              aiMatchScore: app.candidate?.candidate_profile?.profile_completion_percentage || 85,
+              experienceYears: parseInt(app.candidate?.candidate_profile?.total_experience) || 2,
+              skills: Array.isArray(skillsArr) ? skillsArr : ['React', 'TypeScript'],
+              currentDesignation: app.candidate?.candidate_profile?.current_role || 'Software Engineer',
+              currentCompany: app.candidate?.candidate_profile?.university || 'Graduate',
+              education: app.candidate?.candidate_profile?.highest_qualification || 'Degree',
+              portfolioUrl: app.candidate?.candidate_profile?.portfolio_url || '',
+              resumeUrl: app.resume_url || app.candidate?.candidate_profile?.resume_url || '',
+              recruiterNotes: recruiterNotes,
+              activityTimeline: activityTimeline,
+              noticePeriod: 'Immediate'
+            };
+          });
+          setCandidates(mapped);
+
+          // Recount applications for jobs
+          setJobs(prevJobs => prevJobs.map(j => ({
+            ...j,
+            applications: Math.max(j.applications, jobAppCounts[j.id] || 0)
+          })));
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch recruiter applications:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecruiterJobs();
+    fetchRecruiterApplications();
+  }, []);
+
   // Sync prop active tab changes from Navbar/Parent App
   useEffect(() => {
     if (parentActiveTab) {
@@ -147,22 +276,55 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
   // Sourcing & Candidates Mutation
   const handleAddCandidate = (newCand: Candidate) => {
     setCandidates([newCand, ...candidates]);
-    // Append a mock notification
-    setNotifications([
-      {
-        id: `notif-${Date.now()}`,
-        type: 'new_applicant',
-        title: 'New Applicant Sourced',
-        message: `${newCand.name} was added to the database. AI Match: ${newCand.aiMatchScore}%.`,
-        time: 'Just Now',
-        read: false,
-        category: 'applicant'
-      },
-      ...notifications
-    ]);
   };
 
-  const handleUpdateCandidate = (candId: string, updates: Partial<Candidate>) => {
+  const mapStageToBackendStatus = (stage: string): string => {
+    switch (stage) {
+      case 'applied': return 'Applied';
+      case 'screening': return 'Viewed';
+      case 'shortlisted': return 'Shortlisted';
+      case 'interview1': return 'Interview Scheduled';
+      case 'interview2': return 'Interview Completed';
+      case 'final': return 'Selected';
+      case 'offer': return 'Offer Sent';
+      case 'joined': return 'Hired';
+      case 'rejected': return 'Rejected';
+      default: return 'Applied';
+    }
+  };
+
+  const handleUpdateCandidate = async (candId: string, updates: Partial<Candidate>) => {
+    // If updating recruiter notes:
+    if (updates.recruiterNotes && Array.isArray(updates.recruiterNotes)) {
+      const existingCandidate = candidates.find(c => c.id === candId);
+      const existingNotes = existingCandidate?.recruiterNotes || [];
+      const newNotes = updates.recruiterNotes.filter(
+        (n: any) => !existingNotes.some((ex: any) => ex.id === n.id)
+      );
+
+      if (newNotes.length > 0) {
+        const latestNote = newNotes[0].text;
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const token = localStorage.getItem('getworxs_access_token');
+        if (token) {
+          try {
+            await fetch(`${API_URL}/api/v1/applications/${candId}/notes`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ note: latestNote })
+            });
+            fetchRecruiterApplications();
+            return;
+          } catch (e) {
+            console.warn('Failed to append note to backend:', e);
+          }
+        }
+      }
+    }
+
     const updated = candidates.map(c => c.id === candId ? { ...c, ...updates } : c);
     setCandidates(updated);
     if (selectedCandidate && selectedCandidate.id === candId) {
@@ -170,20 +332,32 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
     }
   };
 
-  const handleUpdateCandidateStage = (candId: string, newStage: Candidate['currentStage']) => {
-    handleUpdateCandidate(candId, { currentStage: newStage });
-    // Push timeline log
-    const cand = candidates.find(c => c.id === candId);
-    if (cand) {
-      const log = {
-        id: `act-${Date.now()}`,
-        event: `Moved to ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}`,
-        time: 'Just Now',
-        details: 'Updated by Recruiter via Pipeline Board.'
-      };
-      handleUpdateCandidate(candId, {
-        activityTimeline: [log, ...cand.activityTimeline]
+  const handleUpdateCandidateStage = async (candId: string, newStage: Candidate['currentStage']) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const token = localStorage.getItem('getworxs_access_token');
+    if (!token) return;
+
+    const backendStatus = mapStageToBackendStatus(newStage);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/applications/${candId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: backendStatus,
+          note: `Recruiter moved candidate to stage: ${newStage}`
+        })
       });
+      if (res.ok) {
+        fetchRecruiterApplications();
+        if (selectedCandidate && selectedCandidate.id === candId) {
+          setSelectedCandidate(prev => prev ? { ...prev, currentStage: newStage } : null);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to update stage on backend:', err);
     }
   };
 
@@ -283,14 +457,8 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
     setIsScheduleInterviewOpen(true);
   };
 
-  // Notification mark read
-  const handleMarkNotificationRead = (notifId: string) => {
-    setNotifications(notifications.map(n => n.id === notifId ? { ...n, read: true } : n));
-  };
+  // Notification mark read handled by hook
 
-  const handleClearNotifications = () => {
-    setNotifications([]);
-  };
 
   // AI Copilot Chat Form Submission
   const handleAiChatSubmit = (e: React.FormEvent) => {
@@ -367,6 +535,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
               { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
               { key: 'jobs', label: 'Job Openings', icon: <Briefcase size={18} />, badge: jobs.filter(j => j.status === 'active').length },
               { key: 'applicants', label: 'Applicants', icon: <Users size={18} />, badge: candidates.filter(c => c.currentStage === 'applied').length },
+              { key: 'talent-search', label: 'Talent Search', icon: <Search size={18} /> },
               { key: 'pipeline', label: 'Candidate Pipeline', icon: <GitBranch size={18} /> },
               { key: 'resume-inbox', label: 'Resume Inbox', icon: <Inbox size={18} /> },
               { key: 'ai-match', label: 'AI Candidate Match', icon: <Sparkles size={18} /> },
@@ -375,7 +544,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
               { key: 'messages', label: 'Messages', icon: <MessageSquare size={18} />, badge: threads.filter(t => t.unreadCount > 0).length },
               { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={18} />, badge: tasks.filter(t => t.status !== 'completed').length },
               { key: 'reports', label: 'Reports', icon: <BarChart2 size={18} /> },
-              { key: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: notifications.filter(n => !n.read).length },
+              { key: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: unreadCount },
               { key: 'profile', label: 'Recruiter Profile', icon: <User size={18} /> }
             ].map(item => (
               <button 
@@ -554,7 +723,7 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
             <button className="utility-badge-btn" onClick={() => handleTabChange('notifications')}>
               <Bell size={18} />
-              {notifications.filter(n => !n.read).length > 0 && (
+              {unreadCount > 0 && (
                 <span className="dot"></span>
               )}
             </button>
@@ -610,6 +779,10 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
               onSendMessage={handleTriggerMessage}
               openScheduleInterviewModal={handleTriggerSchedule}
             />
+          )}
+
+          {localTab === 'talent-search' && (
+            <TalentSearchTab />
           )}
 
           {localTab === 'pipeline' && (
@@ -688,9 +861,9 @@ export const RecruiterDashboard: React.FC<RecruiterDashboardProps> = ({
 
           {localTab === 'notifications' && (
             <NotificationsTab 
-              notifications={notifications}
-              onMarkRead={handleMarkNotificationRead}
-              onClearAll={handleClearNotifications}
+              notifications={notifications as any}
+              onMarkRead={(id) => markRead(Number(id))}
+              onClearAll={markAllRead}
             />
           )}
 

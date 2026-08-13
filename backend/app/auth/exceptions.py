@@ -54,3 +54,13 @@ class UserInactiveException(ForbiddenException):
 class InvalidResetTokenException(BadRequestException):
     def __init__(self, message: str = "Invalid or expired password reset token"):
         super().__init__(message=message)
+
+
+class MustChangePasswordException(ForbiddenException):
+    def __init__(self, message: str = "Password change required before continuing. Please change your temporary password."):
+        super().__init__(message=message)
+
+
+class TemporaryPasswordExpiredException(BadRequestException):
+    def __init__(self, message: str = "Temporary password has expired. Please request a new invitation."):
+        super().__init__(message=message)

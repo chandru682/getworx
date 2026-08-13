@@ -369,8 +369,8 @@ export const JobsTab: React.FC<JobsTabProps> = ({
         ) : (
           <div className="empty-table-state">
             <Briefcase size={48} className="empty-icon" />
-            <h3>No Jobs Found</h3>
-            <p>We couldn't find any job listings matching your search terms or filters.</p>
+            <h3>No jobs available.</h3>
+            <p>Post a new job to start receiving candidate applications.</p>
             <button className="btn-secondary font-sans" onClick={() => {
               setSearchTerm('');
               setStatusFilter('all');

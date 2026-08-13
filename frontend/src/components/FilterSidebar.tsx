@@ -1,28 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Globe, 
-  Award, 
-  Plane, 
-  ChevronDown, 
-  ChevronUp, 
   Search, 
   RotateCcw, 
   SlidersHorizontal,
+  ChevronDown, 
+  ChevronUp, 
+  Check, 
+  X,
   Building2,
-  Briefcase,
+  MapPin,
   Sparkles,
-  Check,
-  Star,
-  CheckCircle2,
-  Clock,
-  GraduationCap,
-  Gift,
-  Bot,
-  X
+  ShieldCheck,
+  Filter
 } from 'lucide-react';
-import { REGIONS, type RegionCode } from '../utils/currency';
-import { JOB_CATEGORIES, getCleanCategoryName } from '../data/jobCategoriesData';
-import { type LangCode, getTranslation } from '../utils/translate';
+import { type CurrencyCode, type RegionCode, CURRENCIES } from '../utils/currency';
+import { type LangCode } from '../utils/translate';
 
 export interface FilterState {
   // Location
@@ -30,6 +22,7 @@ export interface FilterState {
   country: string;
   state: string;
   city: string;
+  locationSearch?: string;
 
   // Job Details
   industry: string;
@@ -43,7 +36,7 @@ export interface FilterState {
   workModes: string[];
   jobTypes: string[];
 
-  // More Filters Accordion
+  // More Filters Accordion & Company
   companyName: string;
   verifiedCompanyOnly: boolean;
   topEmployerOnly: boolean;
@@ -55,6 +48,11 @@ export interface FilterState {
   postedDate: string;
   benefits: string[];
   minAiMatchScore: number;
+
+  // Advanced Filters
+  noticePeriod?: string;
+  language?: string;
+  travelRequirement?: string;
 }
 
 interface FilterSidebarProps {
@@ -63,6 +61,7 @@ interface FilterSidebarProps {
   onResetFilters: () => void;
   matchingCount?: number;
   activeLang?: LangCode;
+  activeCurrency?: CurrencyCode;
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
@@ -70,260 +69,252 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onFilterChange,
   onResetFilters,
   matchingCount = 0,
-  activeLang = 'en'
+  activeCurrency = 'INR'
 }) => {
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [skillSearch, setSkillSearch] = useState('');
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [showAllIndustries, setShowAllIndustries] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [industrySearch, setIndustrySearch] = useState('');
 
-  // Lists for Location Dropdowns
+  const currencySymbol = CURRENCIES[activeCurrency]?.symbol || '$';
+
+  // Calculate total active applied filters count
+  const appliedFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.country && filters.country !== 'All Countries') count++;
+    if (filters.state && filters.state !== 'All States / Provinces') count++;
+    if (filters.city && filters.city !== 'All Cities') count++;
+    if (filters.workModes.length > 0) count += filters.workModes.length;
+    if (filters.jobTypes.length > 0) count += filters.jobTypes.length;
+    if (filters.experience && filters.experience !== 'all') count++;
+    if (filters.salaryMin > 0 || (filters.salaryMax < 250000 && filters.salaryMax > 0)) count++;
+    if (filters.category) count++;
+    if (filters.industry && filters.industry !== 'All Industries') count++;
+    if (filters.companyName) count++;
+    if (filters.verifiedCompanyOnly) count++;
+    if (filters.visaOnly) count++;
+    if (filters.relocationOnly) count++;
+    if (filters.benefits.length > 0) count += filters.benefits.length;
+    if (filters.postedDate && filters.postedDate !== 'all') count++;
+    if (filters.noticePeriod && filters.noticePeriod !== 'any') count++;
+    if (filters.education && filters.education !== 'Any Education') count++;
+    return count;
+  }, [filters]);
+
+  // Hierarchical Location Dropdowns Logic
   const countries = [
     'All Countries',
     'India',
-    'United Arab Emirates'
+    'United States',
+    'United Arab Emirates',
+    'United Kingdom',
+    'Singapore',
+    'Canada',
+    'Germany'
   ];
 
-  // Dynamic states based on selected country
   const getStatesForCountry = (country: string) => {
-    const allStates = [
-      'All States / Provinces',
-      // India States
-      'Karnataka',
-      'Maharashtra',
-      'Delhi',
-      'Telangana',
-      'Tamil Nadu',
-      'Haryana',
-      'Uttar Pradesh',
-      // UAE Emirates
-      'Dubai Emirate',
-      'Abu Dhabi Emirate',
-      'Sharjah Emirate'
-    ];
-    if (country === 'India') {
-      return ['All States / Provinces', 'Karnataka', 'Maharashtra', 'Delhi', 'Telangana', 'Tamil Nadu', 'Haryana', 'Uttar Pradesh'];
+    switch (country) {
+      case 'India':
+        return ['All States / Provinces', 'Karnataka', 'Telangana', 'Maharashtra', 'Tamil Nadu', 'Delhi NCR', 'Haryana'];
+      case 'United States':
+        return ['All States / Provinces', 'California', 'New York', 'Texas', 'Washington', 'Massachusetts'];
+      case 'United Arab Emirates':
+        return ['All States / Provinces', 'Dubai Emirate', 'Abu Dhabi Emirate', 'Sharjah Emirate'];
+      default:
+        return ['All States / Provinces'];
     }
-    if (country === 'United Arab Emirates') {
-      return ['All States / Provinces', 'Dubai Emirate', 'Abu Dhabi Emirate', 'Sharjah Emirate'];
-    }
-    return allStates;
   };
 
-  // Dynamic cities based on selected country/state
-  const getCitiesForLocation = (country: string, state: string) => {
-    const allCities = [
-      'All Cities',
-      'Bengaluru',
-      'Mumbai',
-      'New Delhi',
-      'Hyderabad',
-      'Chennai',
-      'Gurugram',
-      'Pune',
-      'Noida',
-      'Dubai',
-      'Abu Dhabi',
-      'Sharjah'
-    ];
-    
-    if (state !== 'All States / Provinces') {
-      if (state === 'Karnataka') return ['All Cities', 'Bengaluru'];
-      if (state === 'Maharashtra') return ['All Cities', 'Mumbai', 'Pune'];
-      if (state === 'Delhi') return ['All Cities', 'New Delhi'];
-      if (state === 'Telangana') return ['All Cities', 'Hyderabad'];
-      if (state === 'Tamil Nadu') return ['All Cities', 'Chennai'];
-      if (state === 'Haryana') return ['All Cities', 'Gurugram'];
-      if (state === 'Uttar Pradesh') return ['All Cities', 'Noida'];
-      if (state === 'Dubai Emirate') return ['All Cities', 'Dubai'];
-      if (state === 'Abu Dhabi Emirate') return ['All Cities', 'Abu Dhabi'];
-      if (state === 'Sharjah Emirate') return ['All Cities', 'Sharjah'];
+  const getCitiesForState = (state: string) => {
+    switch (state) {
+      case 'Karnataka':
+        return ['All Cities', 'Bangalore', 'Mysore', 'Hubli'];
+      case 'Telangana':
+        return ['All Cities', 'Hyderabad', 'Warangal'];
+      case 'Maharashtra':
+        return ['All Cities', 'Mumbai', 'Pune', 'Nagpur'];
+      case 'Tamil Nadu':
+        return ['All Cities', 'Chennai', 'Coimbatore'];
+      case 'California':
+        return ['All Cities', 'San Francisco', 'Los Angeles', 'San Jose'];
+      case 'Dubai Emirate':
+        return ['All Cities', 'Dubai City', 'Jebel Ali'];
+      default:
+        return ['All Cities'];
     }
-
-    if (country === 'India') {
-      return ['All Cities', 'Bengaluru', 'Mumbai', 'New Delhi', 'Hyderabad', 'Chennai', 'Gurugram', 'Pune', 'Noida'];
-    }
-    if (country === 'United Arab Emirates') {
-      return ['All Cities', 'Dubai', 'Abu Dhabi', 'Sharjah'];
-    }
-    return allCities;
   };
 
-  const states = getStatesForCountry(filters.country);
-  const cities = getCitiesForLocation(filters.country, filters.state);
+  const statesList = getStatesForCountry(filters.country);
+  const citiesList = getCitiesForState(filters.state);
 
-  const experienceOptions = [
-    { value: 'all', label: 'Any Experience' },
-    { value: 'fresher', label: 'Fresher (0 Yrs)' },
-    { value: '1-3', label: '1 - 3 Years' },
-    { value: '3-5', label: '3 - 5 Years' },
-    { value: '5-8', label: '5 - 8 Years' },
-    { value: '8+', label: '8+ Years (Lead)' }
+  // Quick Filter Pill Toggles
+  const quickPills = [
+    { label: 'Remote', active: filters.workModes.includes('Remote'), toggle: () => toggleWorkMode('Remote') },
+    { label: 'Hybrid', active: filters.workModes.includes('Hybrid'), toggle: () => toggleWorkMode('Hybrid') },
+    { label: 'On-site', active: filters.workModes.includes('In-office') || filters.workModes.includes('On-site'), toggle: () => toggleWorkMode('In-office') },
+    { label: 'Full-time', active: filters.jobTypes.includes('Full Time'), toggle: () => toggleJobType('Full Time') },
+    { label: 'Part-time', active: filters.jobTypes.includes('Part Time'), toggle: () => toggleJobType('Part Time') },
+    { label: 'Internship', active: filters.jobTypes.includes('Internship'), toggle: () => toggleJobType('Internship') },
+    { label: 'Fresher', active: filters.experience === 'fresher', toggle: () => setExperience('fresher') },
+    { label: 'Urgent Hiring', active: filters.jobStatuses.includes('urgent'), toggle: () => toggleJobStatus('urgent') }
   ];
 
-  const workModesList = ['Remote', 'Hybrid', 'In-office'];
-  const employmentTypesList = ['Full Time', 'Part Time', 'Contract', 'Internship', 'Freelance'];
-
-  const availableSkillsList = [
-    'React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Figma', 
-    'Docker', 'Kubernetes', 'B2B Sales', 'SEO', 'Finance', 'System Design', 
-    'HR Operations', 'Customer Service', 'CAD', 'Radiology', 'SAP ERP', 'Aviation'
-  ];
-
-  const educationOptions = ['Any Education', 'High School', "Bachelor's", "Master's", 'Doctorate'];
-  const jobStatusesList = ['Easy Apply', 'Featured', 'Urgent Hiring', 'Verified Jobs'];
-  const postedDateOptions = [
-    { value: 'all', label: 'Anytime' },
-    { value: '24h', label: 'Last 24 Hours' },
-    { value: '3d', label: 'Last 3 Days' },
-    { value: '7d', label: 'Last Week' },
-    { value: '30d', label: 'Last Month' }
-  ];
-  const benefitsList = ['Health Insurance', 'Bonus', 'Paid Leave', 'Stock Options', 'Learning Budget'];
-  const aiMatchOptions = [
-    { value: 0, label: 'Any Match' },
-    { value: 80, label: '80%+ Match' },
-    { value: 90, label: '90%+ Match' },
-    { value: 95, label: '95%+ Match' },
-    { value: 100, label: '100% Match' }
-  ];
-
-  // Dynamically compute Job Categories based on selected Industry
-  const selectedIndustryObj = JOB_CATEGORIES.find(c => getCleanCategoryName(c.name) === filters.industry);
-  const availableCategories = selectedIndustryObj 
-    ? selectedIndustryObj.subcategories 
-    : Array.from(new Set(JOB_CATEGORIES.flatMap(c => c.subcategories))).slice(0, 20);
-
-  // Dynamically compute Job Roles based on selected Category
-  const availableRoles = filters.category 
-    ? [`${filters.category} Specialist`, `${filters.category} Lead`, `Senior ${filters.category}`, `Junior ${filters.category}`]
-    : ['Software Architect', 'Product Designer', 'DevOps Lead', 'HR Manager', 'Sales Director', 'Data Engineer'];
-
-  // Helper toggle function for multi-select arrays
-  const toggleArrayItem = (key: keyof FilterState, item: string) => {
-    const list = (filters[key] as string[]) || [];
-    const updated = list.includes(item)
-      ? list.filter(x => x !== item)
-      : [...list, item];
-    onFilterChange({ ...filters, [key]: updated });
+  const toggleWorkMode = (mode: string) => {
+    const exists = filters.workModes.includes(mode);
+    const updated = exists ? filters.workModes.filter(m => m !== mode) : [...filters.workModes, mode];
+    onFilterChange({ ...filters, workModes: updated });
   };
 
-  const updateSingleField = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-    onFilterChange({ ...filters, [key]: value });
+  const toggleJobType = (type: string) => {
+    const exists = filters.jobTypes.includes(type);
+    const updated = exists ? filters.jobTypes.filter(t => t !== type) : [...filters.jobTypes, type];
+    onFilterChange({ ...filters, jobTypes: updated });
   };
 
-  // Count active filters for badge
-  const activeCount = [
-    filters.region !== 'all',
-    filters.country !== 'All Countries',
-    filters.state !== 'All States / Provinces',
-    filters.city !== 'All Cities',
-    filters.industry !== 'All Industries',
-    !!filters.category,
-    !!filters.role,
-    filters.experience !== 'all',
-    filters.salaryMin > 0 || filters.salaryMax < 250000,
-    filters.workModes.length > 0,
-    filters.jobTypes.length > 0,
-    !!filters.companyName,
-    filters.verifiedCompanyOnly,
-    filters.topEmployerOnly,
-    filters.selectedSkills.length > 0,
-    filters.education !== 'Any Education',
-    filters.visaOnly,
-    filters.relocationOnly,
-    filters.jobStatuses.length > 0,
-    filters.postedDate !== 'all',
-    filters.benefits.length > 0,
-    filters.minAiMatchScore > 0
-  ].filter(Boolean).length;
+  const setExperience = (exp: string) => {
+    const newExp = filters.experience === exp ? 'all' : exp;
+    onFilterChange({ ...filters, experience: newExp });
+  };
 
+  const toggleJobStatus = (status: string) => {
+    const exists = filters.jobStatuses.includes(status);
+    const updated = exists ? filters.jobStatuses.filter(s => s !== status) : [...filters.jobStatuses, status];
+    onFilterChange({ ...filters, jobStatuses: updated });
+  };
+
+  const toggleBenefit = (benefit: string) => {
+    const exists = filters.benefits.includes(benefit);
+    const updated = exists ? filters.benefits.filter(b => b !== benefit) : [...filters.benefits, benefit];
+    onFilterChange({ ...filters, benefits: updated });
+  };
+
+  // Job Categories list
+  const topCategories = [
+    'Software Development',
+    'Sales & Business',
+    'Marketing & Growth',
+    'Human Resources',
+    'Finance & Accounting',
+    'Product Management',
+    'UI/UX & Design',
+    'Data Science & AI',
+    'Operations & Supply Chain',
+    'Customer Support'
+  ];
+
+  const filteredCategories = topCategories.filter(cat => 
+    cat.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  // Industries List
+  const allIndustriesList = [
+    'All Industries',
+    'Information Technology & Services',
+    'Computer Software & SaaS',
+    'Financial Services & Fintech',
+    'E-Commerce & Retail',
+    'Healthcare & Telemedicine',
+    'EdTech & Education',
+    'Automotive & EV Technology',
+    'Media & Digital Entertainment',
+    'Telecommunications',
+    'Cybersecurity & Cloud',
+    'Biotechnology & Pharma',
+    'Logistics & Supply Chain'
+  ];
+
+  const filteredIndustries = allIndustriesList.filter(ind =>
+    ind.toLowerCase().includes(industrySearch.toLowerCase())
+  );
+
+  const displayedIndustries = showAllIndustries ? filteredIndustries : filteredIndustries.slice(0, 5);
+
+  // Filter Panel Component Content
   const renderFilterContent = () => (
-    <div className="filter-panel-inner">
-      {/* Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <SlidersHorizontal size={18} style={{ color: 'var(--color-primary)' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
-            {getTranslation(activeLang, 'filter_jobs')}
-          </h3>
-          {activeCount > 0 && (
-            <span style={{
-              background: 'var(--color-primary)',
-              color: '#ffffff',
-              borderRadius: '12px',
-              padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: '800'
-            }}>
-              {activeCount}
+    <div className="filter-sidebar-inner">
+      {/* 1. FILTER HEADER */}
+      <div className="filter-header-main">
+        <div className="filter-header-title-group">
+          <SlidersHorizontal size={18} className="filter-icon-primary" />
+          <h3 className="filter-title-text">Filter Jobs</h3>
+          {appliedFiltersCount > 0 && (
+            <span className="applied-count-badge">
+              {appliedFiltersCount} applied
             </span>
           )}
         </div>
-
-        <button 
-          onClick={onResetFilters}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: 'var(--color-primary)', 
-            fontSize: '12.5px', 
-            fontWeight: '700', 
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-          title="Reset all filters"
-        >
-          <RotateCcw size={12} />
-          {getTranslation(activeLang, 'reset_all')}
-        </button>
+        {appliedFiltersCount > 0 && (
+          <button 
+            type="button" 
+            className="btn-reset-filters-text"
+            onClick={onResetFilters}
+          >
+            <RotateCcw size={13} />
+            <span>Reset All</span>
+          </button>
+        )}
       </div>
 
-      {/* ================= VISIBLE FILTERS ================= */}
+      {/* 2. QUICK FILTERS ROW */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Quick Filters</span>
+        <div className="quick-chips-wrap">
+          {quickPills.map(pill => (
+            <button
+              key={pill.label}
+              type="button"
+              className={`quick-pill-chip ${pill.active ? 'active' : ''}`}
+              onClick={pill.toggle}
+            >
+              {pill.active && <Check size={12} />}
+              <span>{pill.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* 🌍 1. Location Card */}
-      <div className="filter-card-section">
-        <h4 className="filter-section-title">
-          <Globe size={14} style={{ color: 'var(--color-primary)' }} /> {getTranslation(activeLang, 'location')}
-        </h4>
-
-        {/* Region */}
-        <div className="filter-field-group">
-          <label className="filter-label">{getTranslation(activeLang, 'region')}</label>
-          <select 
-            className="filter-select"
-            value={filters.region}
-            onChange={(e) => updateSingleField('region', e.target.value as RegionCode)}
-          >
-            {Object.entries(REGIONS).map(([code, reg]) => (
-              <option key={code} value={code}>
-                {reg.flag} {reg.name}
-              </option>
-            ))}
-          </select>
+      {/* 3. LOCATION FILTER (Hierarchical Cascading) */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Location</span>
+        
+        {/* Unified Search Input */}
+        <div className="filter-input-search-box">
+          <MapPin size={15} className="filter-input-icon" />
+          <input 
+            type="text"
+            placeholder="Search city, state or country"
+            value={filters.city !== 'All Cities' ? filters.city : (filters.locationSearch || '')}
+            onChange={(e) => onFilterChange({ ...filters, city: e.target.value, locationSearch: e.target.value })}
+            className="filter-text-input"
+          />
+          {filters.city !== 'All Cities' && (
+            <button 
+              type="button" 
+              className="btn-clear-field"
+              onClick={() => onFilterChange({ ...filters, city: 'All Cities', locationSearch: '' })}
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
-        {/* Country */}
-        <div className="filter-field-group">
-          <label className="filter-label">{getTranslation(activeLang, 'country')}</label>
-          <select 
-            className="filter-select"
+        {/* Cascading Country Dropdown */}
+        <div className="filter-select-wrapper">
+          <label className="filter-field-sublabel">Country</label>
+          <select
             value={filters.country}
             onChange={(e) => {
-              const newCountry = e.target.value;
-              const validStates = getStatesForCountry(newCountry);
-              const nextState = validStates.includes(filters.state) ? filters.state : 'All States / Provinces';
-              const validCities = getCitiesForLocation(newCountry, nextState);
-              const nextCity = validCities.includes(filters.city) ? filters.city : 'All Cities';
-              
+              const country = e.target.value;
               onFilterChange({
                 ...filters,
-                country: newCountry,
-                state: nextState,
-                city: nextCity
+                country,
+                state: 'All States / Provinces',
+                city: 'All Cities'
               });
             }}
+            className="filter-select-dropdown"
           >
             {countries.map(c => (
               <option key={c} value={c}>{c}</option>
@@ -331,476 +322,409 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </select>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          {/* State / Province */}
-          <div className="filter-field-group">
-            <label className="filter-label">{getTranslation(activeLang, 'state_province')}</label>
-            <select 
-              className="filter-select"
+        {/* Cascading State Dropdown (Loaded when country is selected) */}
+        {filters.country !== 'All Countries' && (
+          <div className="filter-select-wrapper">
+            <label className="filter-field-sublabel">State / Province</label>
+            <select
               value={filters.state}
               onChange={(e) => {
-                const newState = e.target.value;
-                const validCities = getCitiesForLocation(filters.country, newState);
-                const nextCity = validCities.includes(filters.city) ? filters.city : 'All Cities';
-                
+                const state = e.target.value;
                 onFilterChange({
                   ...filters,
-                  state: newState,
-                  city: nextCity
+                  state,
+                  city: 'All Cities'
                 });
               }}
+              className="filter-select-dropdown"
             >
-              {states.map(s => (
+              {statesList.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
+        )}
 
-          {/* City */}
-          <div className="filter-field-group">
-            <label className="filter-label">{getTranslation(activeLang, 'city')}</label>
-            <select 
-              className="filter-select"
+        {/* Cascading City Dropdown (Loaded when state is selected) */}
+        {filters.state !== 'All States / Provinces' && (
+          <div className="filter-select-wrapper">
+            <label className="filter-field-sublabel">City</label>
+            <select
               value={filters.city}
-              onChange={(e) => updateSingleField('city', e.target.value)}
+              onChange={(e) => onFilterChange({ ...filters, city: e.target.value })}
+              className="filter-select-dropdown"
             >
-              {cities.map(ct => (
-                <option key={ct} value={ct}>{ct}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* 💼 2. Job Details Card (Dynamic Cascading) */}
-      <div className="filter-card-section">
-        <h4 className="filter-section-title">
-          <Briefcase size={14} style={{ color: 'var(--color-primary)' }} /> {getTranslation(activeLang, 'job_details')}
-        </h4>
-
-        {/* Industry */}
-        <div className="filter-field-group">
-          <label className="filter-label">{getTranslation(activeLang, 'industry_sector')}</label>
-          <select 
-            className="filter-select"
-            value={filters.industry}
-            onChange={(e) => {
-              const newInd = e.target.value;
-              onFilterChange({
-                ...filters,
-                industry: newInd,
-                category: '', // Reset lower cascade
-                role: ''
-              });
-            }}
-          >
-            <option value="All Industries">All Industries (33 Sectors)</option>
-            {JOB_CATEGORIES.map(cat => {
-              const cleanName = getCleanCategoryName(cat.name);
-              return <option key={cat.id} value={cleanName}>{cleanName}</option>;
-            })}
-          </select>
-        </div>
-
-        {/* Job Category (Dynamic) */}
-        <div className="filter-field-group">
-          <label className="filter-label">{getTranslation(activeLang, 'job_category')}</label>
-          <select 
-            className="filter-select"
-            value={filters.category}
-            onChange={(e) => {
-              const newCat = e.target.value;
-              onFilterChange({
-                ...filters,
-                category: newCat,
-                role: '' // Reset role cascade
-              });
-            }}
-          >
-            <option value="">All Categories</option>
-            {availableCategories.map(sub => (
-              <option key={sub} value={sub}>{sub}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Job Role (Dynamic) */}
-        {filters.category && (
-          <div className="filter-field-group">
-            <label className="filter-label">{getTranslation(activeLang, 'job_role')}</label>
-            <select 
-              className="filter-select"
-              value={filters.role}
-              onChange={(e) => updateSingleField('role', e.target.value)}
-            >
-              <option value="">All Specific Roles</option>
-              {availableRoles.map(r => (
-                <option key={r} value={r}>{r}</option>
+              {citiesList.map(c => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
         )}
-
-        {/* Experience */}
-        <div className="filter-field-group">
-          <label className="filter-label">{getTranslation(activeLang, 'experience_level')}</label>
-          <select 
-            className="filter-select"
-            value={filters.experience}
-            onChange={(e) => updateSingleField('experience', e.target.value)}
-          >
-            {experienceOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Salary Range (USD) */}
-        <div className="filter-field-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <label className="filter-label" style={{ margin: 0 }}>{getTranslation(activeLang, 'salary_range')} (USD)</label>
-            <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--color-primary)' }}>
-              ${filters.salaryMin.toLocaleString()} - ${filters.salaryMax >= 250000 ? '250,000+' : filters.salaryMax.toLocaleString()}/yr
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-              <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', width: '28px', flexShrink: 0 }}>Min</span>
-              <input 
-                type="range" 
-                min="0" 
-                max="250000" 
-                step="5000"
-                value={filters.salaryMin}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  if (val <= filters.salaryMax) {
-                    updateSingleField('salaryMin', val);
-                  }
-                }}
-                className="salary-range-input"
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-              <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', width: '28px', flexShrink: 0 }}>Max</span>
-              <input 
-                type="range" 
-                min="0" 
-                max="250000" 
-                step="5000"
-                value={filters.salaryMax}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  if (val >= filters.salaryMin) {
-                    updateSingleField('salaryMax', val);
-                  }
-                }}
-                className="salary-range-input"
-              />
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* 🏢 3. Work Mode (Multi-Select Chips) */}
-      <div className="filter-card-section">
-        <h4 className="filter-section-title">{getTranslation(activeLang, 'work_mode')}</h4>
-        <div className="pill-chips-grid">
-          {workModesList.map(mode => {
-            const isSelected = filters.workModes.includes(mode);
+      {/* 4. WORK MODE (Multi-select Chips) */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Work Mode</span>
+        <div className="chips-grid-wrap">
+          {['Remote', 'Hybrid', 'In-office'].map(mode => {
+            const active = filters.workModes.includes(mode);
             return (
-              <button 
+              <button
                 key={mode}
                 type="button"
-                className={`filter-chip ${isSelected ? 'active' : ''}`}
-                onClick={() => toggleArrayItem('workModes', mode)}
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => toggleWorkMode(mode)}
               >
-                {isSelected && <Check size={12} />}
-                <span>{mode}</span>
+                {active && <Check size={12} />}
+                <span>{mode === 'In-office' ? 'On-site' : mode}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 📄 4. Employment Type (Multi-Select Chips) */}
-      <div className="filter-card-section">
-        <h4 className="filter-section-title">{getTranslation(activeLang, 'employment_type')}</h4>
-        <div className="pill-chips-grid">
-          {employmentTypesList.map(type => {
-            const isSelected = filters.jobTypes.includes(type);
+      {/* 5. JOB TYPE (Multi-select Chips) */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Job Type</span>
+        <div className="chips-grid-wrap">
+          {[
+            { id: 'Full Time', label: 'Full-time' },
+            { id: 'Part Time', label: 'Part-time' },
+            { id: 'Contract', label: 'Contract' },
+            { id: 'Internship', label: 'Internship' },
+            { id: 'Temporary', label: 'Temporary' }
+          ].map(type => {
+            const active = filters.jobTypes.includes(type.id);
             return (
-              <button 
-                key={type}
+              <button
+                key={type.id}
                 type="button"
-                className={`filter-chip ${isSelected ? 'active' : ''}`}
-                onClick={() => toggleArrayItem('jobTypes', type)}
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => toggleJobType(type.id)}
               >
-                {isSelected && <Check size={12} />}
-                <span>{type}</span>
+                {active && <Check size={12} />}
+                <span>{type.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ================= MORE FILTERS ACCORDION ================= */}
-      <div className="more-filters-accordion-container" style={{ marginTop: '16px' }}>
+      {/* 6. EXPERIENCE RANGES */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Experience</span>
+        <div className="chips-grid-wrap">
+          {[
+            { id: 'fresher', label: 'Fresher (0 Yrs)' },
+            { id: '0-1', label: '0 – 1 Yrs' },
+            { id: '1-3', label: '1 – 3 Yrs' },
+            { id: '3-5', label: '3 – 5 Yrs' },
+            { id: '5-10', label: '5 – 10 Yrs' },
+            { id: '10+', label: '10+ Yrs' }
+          ].map(exp => {
+            const active = filters.experience === exp.id;
+            return (
+              <button
+                key={exp.id}
+                type="button"
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => setExperience(exp.id)}
+              >
+                {active && <Check size={12} />}
+                <span>{exp.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 7. DYNAMIC SALARY FILTER */}
+      <div className="filter-block-group">
+        <div className="filter-label-row">
+          <span className="filter-block-label">Salary Range</span>
+          <span className="salary-currency-tag">{activeCurrency} ({currencySymbol})</span>
+        </div>
+
+        <div className="salary-input-duo">
+          <div className="salary-input-box">
+            <span className="currency-prefix">{currencySymbol}</span>
+            <input 
+              type="number"
+              placeholder="Min"
+              value={filters.salaryMin || ''}
+              onChange={(e) => onFilterChange({ ...filters, salaryMin: Number(e.target.value) || 0 })}
+              className="salary-number-input"
+            />
+          </div>
+          <span className="salary-dash">–</span>
+          <div className="salary-input-box">
+            <span className="currency-prefix">{currencySymbol}</span>
+            <input 
+              type="number"
+              placeholder="Max"
+              value={filters.salaryMax && filters.salaryMax < 250000 ? filters.salaryMax : ''}
+              onChange={(e) => onFilterChange({ ...filters, salaryMax: Number(e.target.value) || 250000 })}
+              className="salary-number-input"
+            />
+          </div>
+        </div>
+
+        <input 
+          type="range"
+          min="0"
+          max="250000"
+          step="10000"
+          value={filters.salaryMax || 250000}
+          onChange={(e) => onFilterChange({ ...filters, salaryMax: Number(e.target.value) })}
+          className="salary-range-slider"
+        />
+        <div className="salary-slider-labels">
+          <span>{currencySymbol}0</span>
+          <span>{currencySymbol}{filters.salaryMax >= 250000 ? '250k+' : filters.salaryMax.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* 8. JOB CATEGORY (Searchable Multi-select Chips) */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Job Category</span>
+        <div className="filter-input-search-box">
+          <Search size={14} className="filter-input-icon" />
+          <input 
+            type="text"
+            placeholder="Search categories..."
+            value={categorySearch}
+            onChange={(e) => setCategorySearch(e.target.value)}
+            className="filter-text-input"
+          />
+        </div>
+
+        <div className="chips-grid-wrap category-chips-scroll">
+          {filteredCategories.map(cat => {
+            const active = filters.category === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => onFilterChange({ ...filters, category: active ? '' : cat })}
+              >
+                {active && <Check size={12} />}
+                <span>{cat}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 9. INDUSTRY (Expandable Section) */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Industry</span>
+        <div className="filter-input-search-box">
+          <Building2 size={14} className="filter-input-icon" />
+          <input 
+            type="text"
+            placeholder="Search industries..."
+            value={industrySearch}
+            onChange={(e) => setIndustrySearch(e.target.value)}
+            className="filter-text-input"
+          />
+        </div>
+
+        <div className="industry-list-wrap">
+          {displayedIndustries.map(ind => {
+            const active = filters.industry === ind;
+            return (
+              <button
+                key={ind}
+                type="button"
+                className={`industry-list-item ${active ? 'active' : ''}`}
+                onClick={() => onFilterChange({ ...filters, industry: active ? 'All Industries' : ind })}
+              >
+                <span>{ind}</span>
+                {active && <Check size={14} color="var(--color-primary)" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {filteredIndustries.length > 5 && (
+          <button 
+            type="button"
+            className="btn-toggle-expand"
+            onClick={() => setShowAllIndustries(!showAllIndustries)}
+          >
+            <span>{showAllIndustries ? 'Show Less' : `+ Show ${filteredIndustries.length - 5} More Industries`}</span>
+            {showAllIndustries ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        )}
+      </div>
+
+      {/* 10. COMPANY SEARCH & VERIFIED TOGGLE */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Company</span>
+        <div className="filter-input-search-box">
+          <Building2 size={14} className="filter-input-icon" />
+          <input 
+            type="text"
+            placeholder="Search company name..."
+            value={filters.companyName}
+            onChange={(e) => onFilterChange({ ...filters, companyName: e.target.value })}
+            className="filter-text-input"
+          />
+        </div>
+
+        <label className="filter-toggle-switch-row">
+          <div className="toggle-switch-text">
+            <ShieldCheck size={15} color="#10b981" />
+            <span>Verified Companies only</span>
+          </div>
+          <input 
+            type="checkbox"
+            checked={filters.verifiedCompanyOnly}
+            onChange={(e) => onFilterChange({ ...filters, verifiedCompanyOnly: e.target.checked })}
+            className="filter-toggle-checkbox"
+          />
+        </label>
+      </div>
+
+      {/* 11. BENEFITS / PERKS */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Benefits & Perks</span>
+        <div className="chips-grid-wrap">
+          {[
+            'Visa Sponsorship',
+            'Relocation Package',
+            'Health Insurance',
+            'Work From Home',
+            'Flexible Hours',
+            'Paid Leave',
+            'ESOP',
+            'Performance Bonus'
+          ].map(benefit => {
+            const active = filters.benefits.includes(benefit);
+            return (
+              <button
+                key={benefit}
+                type="button"
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => toggleBenefit(benefit)}
+              >
+                {active && <Check size={12} />}
+                <span>{benefit}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 12. DATE POSTED */}
+      <div className="filter-block-group">
+        <span className="filter-block-label">Date Posted</span>
+        <div className="chips-grid-wrap">
+          {[
+            { id: 'all', label: 'Anytime' },
+            { id: '24h', label: 'Today' },
+            { id: '3d', label: 'Last 3 Days' },
+            { id: '7d', label: 'Last 7 Days' },
+            { id: '30d', label: 'Last 30 Days' }
+          ].map(date => {
+            const active = filters.postedDate === date.id;
+            return (
+              <button
+                key={date.id}
+                type="button"
+                className={`filter-selector-chip ${active ? 'selected' : ''}`}
+                onClick={() => onFilterChange({ ...filters, postedDate: date.id })}
+              >
+                {active && <Check size={12} />}
+                <span>{date.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 13. ADVANCED FILTERS ("More Filters" Accordion) */}
+      <div className="filter-block-group">
         <button 
           type="button"
-          className="more-filters-toggle-btn"
+          className="more-filters-accordion-header"
           onClick={() => setShowMoreFilters(!showMoreFilters)}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
-            <span>{getTranslation(activeLang, 'advanced_filters')}</span>
+          <div className="accordion-title">
+            <Sparkles size={15} color="var(--color-primary)" />
+            <span>More Advanced Filters</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ fontSize: '11px', opacity: 0.8 }}>
-              {showMoreFilters ? 'Collapse' : 'Expand'}
-            </span>
-            {showMoreFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </div>
+          {showMoreFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
 
         {showMoreFilters && (
-          <div className="more-filters-body" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-
-            {/* 🏢 Company */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">
-                <Building2 size={14} style={{ color: 'var(--color-primary)' }} /> Company
-              </h4>
-
-              <div className="filter-field-group">
-                <input 
-                  type="text" 
-                  className="filter-input"
-                  placeholder="Search by company name..."
-                  value={filters.companyName}
-                  onChange={(e) => updateSingleField('companyName', e.target.value)}
-                />
-              </div>
-
-              <div className="filter-list" style={{ gap: '8px' }}>
-                <label className="filter-checkbox-label">
-                  <input 
-                    type="checkbox"
-                    checked={filters.verifiedCompanyOnly}
-                    onChange={(e) => updateSingleField('verifiedCompanyOnly', e.target.checked)}
-                  />
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle2 size={13} style={{ color: 'var(--color-success)' }} /> Verified Companies
-                  </span>
-                </label>
-
-                <label className="filter-checkbox-label">
-                  <input 
-                    type="checkbox"
-                    checked={filters.topEmployerOnly}
-                    onChange={(e) => updateSingleField('topEmployerOnly', e.target.checked)}
-                  />
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Star size={13} style={{ color: 'var(--color-warning)' }} /> Top Employers
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* 🛠 Skills Multi-Select */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">Required Skills</h4>
-              <div className="category-search-wrapper" style={{ position: 'relative', marginBottom: '10px' }}>
-                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  type="text"
-                  placeholder="Filter skills..."
-                  value={skillSearch}
-                  onChange={(e) => setSkillSearch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 10px 6px 28px',
-                    fontSize: '12px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-              </div>
-
-              <div className="pill-chips-grid">
-                {availableSkillsList
-                  .filter(sk => !skillSearch || sk.toLowerCase().includes(skillSearch.toLowerCase()))
-                  .map(skill => {
-                    const isSelected = filters.selectedSkills.includes(skill);
-                    return (
-                      <button 
-                        key={skill}
-                        type="button"
-                        className={`filter-chip ${isSelected ? 'active' : ''}`}
-                        onClick={() => toggleArrayItem('selectedSkills', skill)}
-                      >
-                        {isSelected && <Check size={11} />}
-                        <span>{skill}</span>
-                      </button>
-                    );
-                  })
-                }
-              </div>
-            </div>
-
-            {/* 🎓 Education */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">
-                <GraduationCap size={14} style={{ color: 'var(--color-primary)' }} /> Education
-              </h4>
-              <select 
-                className="filter-select"
-                value={filters.education}
-                onChange={(e) => updateSingleField('education', e.target.value)}
+          <div className="more-filters-accordion-body">
+            {/* Notice Period */}
+            <div className="filter-select-wrapper">
+              <label className="filter-field-sublabel">Notice Period</label>
+              <select
+                value={filters.noticePeriod || 'any'}
+                onChange={(e) => onFilterChange({ ...filters, noticePeriod: e.target.value })}
+                className="filter-select-dropdown"
               >
-                {educationOptions.map(ed => (
-                  <option key={ed} value={ed}>{ed}</option>
-                ))}
+                <option value="any">Any Notice Period</option>
+                <option value="immediate">Immediate Joiner</option>
+                <option value="15days">15 Days or less</option>
+                <option value="30days">30 Days or less</option>
+                <option value="60days">60 Days</option>
               </select>
             </div>
 
-            {/* 🌍 Visa & Relocation */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">Visa & Relocation</h4>
-              <div className="filter-list" style={{ gap: '8px' }}>
-                <label className="filter-checkbox-label">
-                  <input 
-                    type="checkbox"
-                    checked={filters.visaOnly}
-                    onChange={(e) => updateSingleField('visaOnly', e.target.checked)}
-                  />
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Award size={13} style={{ color: '#8b5cf6' }} /> Visa Sponsored
-                  </span>
-                </label>
-
-                <label className="filter-checkbox-label">
-                  <input 
-                    type="checkbox"
-                    checked={filters.relocationOnly}
-                    onChange={(e) => updateSingleField('relocationOnly', e.target.checked)}
-                  />
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Plane size={13} style={{ color: '#06b6d4' }} /> Relocation Available
-                  </span>
-                </label>
-              </div>
+            {/* Minimum Education */}
+            <div className="filter-select-wrapper">
+              <label className="filter-field-sublabel">Education Level</label>
+              <select
+                value={filters.education}
+                onChange={(e) => onFilterChange({ ...filters, education: e.target.value })}
+                className="filter-select-dropdown"
+              >
+                <option value="Any Education">Any Education</option>
+                <option value="Bachelor's Degree">Bachelor's Degree</option>
+                <option value="Master's Degree">Master's Degree</option>
+                <option value="Doctorate / PhD">Doctorate / PhD</option>
+              </select>
             </div>
 
-            {/* ⭐ Job Status */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">Job Status</h4>
-              <div className="pill-chips-grid">
-                {jobStatusesList.map(st => {
-                  const isSelected = filters.jobStatuses.includes(st);
-                  return (
-                    <button 
-                      key={st}
-                      type="button"
-                      className={`filter-chip ${isSelected ? 'active' : ''}`}
-                      onClick={() => toggleArrayItem('jobStatuses', st)}
-                    >
-                      {isSelected && <Check size={11} />}
-                      <span>{st}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Preferred Language */}
+            <div className="filter-select-wrapper">
+              <label className="filter-field-sublabel">Preferred Language</label>
+              <select
+                value={filters.language || 'any'}
+                onChange={(e) => onFilterChange({ ...filters, language: e.target.value })}
+                className="filter-select-dropdown"
+              >
+                <option value="any">Any Language</option>
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+                <option value="arabic">Arabic</option>
+                <option value="german">German</option>
+              </select>
             </div>
-
-            {/* 📅 Posted Date */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">
-                <Clock size={14} style={{ color: 'var(--color-primary)' }} /> Posted Date
-              </h4>
-              <div className="pill-chips-grid">
-                {postedDateOptions.map(p => {
-                  const isSelected = filters.postedDate === p.value;
-                  return (
-                    <button 
-                      key={p.value}
-                      type="button"
-                      className={`filter-chip ${isSelected ? 'active' : ''}`}
-                      onClick={() => updateSingleField('postedDate', p.value)}
-                    >
-                      {isSelected && <Check size={11} />}
-                      <span>{p.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 🎁 Benefits */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">
-                <Gift size={14} style={{ color: 'var(--color-primary)' }} /> Perks & Benefits
-              </h4>
-              <div className="pill-chips-grid">
-                {benefitsList.map(b => {
-                  const isSelected = filters.benefits.includes(b);
-                  return (
-                    <button 
-                      key={b}
-                      type="button"
-                      className={`filter-chip ${isSelected ? 'active' : ''}`}
-                      onClick={() => toggleArrayItem('benefits', b)}
-                    >
-                      {isSelected && <Check size={11} />}
-                      <span>{b}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 🤖 AI Match Score */}
-            <div className="filter-card-section">
-              <h4 className="filter-section-title">
-                <Bot size={14} style={{ color: 'var(--color-primary)' }} /> AI Match Score
-              </h4>
-              <div className="pill-chips-grid">
-                {aiMatchOptions.map(ai => {
-                  const isSelected = filters.minAiMatchScore === ai.value;
-                  return (
-                    <button 
-                      key={ai.value}
-                      type="button"
-                      className={`filter-chip ${isSelected ? 'active' : ''}`}
-                      onClick={() => updateSingleField('minAiMatchScore', ai.value)}
-                    >
-                      {isSelected && <Check size={11} />}
-                      <span>{ai.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
           </div>
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* DESKTOP ACTION FOOTER */}
+      <div className="filter-desktop-footer">
         <button 
           type="button" 
-          className="btn-primary" 
-          onClick={() => setMobileDrawerOpen(false)}
-          style={{ width: '100%', padding: '12px', fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          className="btn-desktop-reset"
+          onClick={onResetFilters}
         >
-          <span>{getTranslation(activeLang, 'apply_filters')}</span>
-          <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '10px', fontSize: '12px' }}>
-            {matchingCount} Jobs
-          </span>
+          Reset All
+        </button>
+        <button 
+          type="button"
+          className="btn-desktop-apply"
+          onClick={() => {}}
+        >
+          Apply Filters
         </button>
       </div>
     </div>
@@ -808,39 +732,65 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Floating Filter Trigger Button */}
-      <div className="mobile-filter-trigger-container">
+      {/* DESKTOP SIDEBAR CONTAINER */}
+      <aside className="getworxs-filter-sidebar desktop-only">
+        {renderFilterContent()}
+      </aside>
+
+      {/* MOBILE TOP TRIGGER BAR ([Filter] [Sort]) */}
+      <div className="mobile-filter-trigger-bar mobile-only">
         <button 
-          className="btn-primary mobile-filter-btn"
+          type="button"
+          className="btn-mobile-trigger-filter"
           onClick={() => setMobileDrawerOpen(true)}
         >
-          <SlidersHorizontal size={16} />
-          <span>Filters</span>
-          {activeCount > 0 && <span className="mobile-filter-badge">{activeCount}</span>}
+          <Filter size={16} />
+          <span>Filter</span>
+          {appliedFiltersCount > 0 && (
+            <span className="mobile-badge-count">{appliedFiltersCount}</span>
+          )}
         </button>
       </div>
 
-      {/* Mobile Bottom Sheet Drawer Modal */}
+      {/* MOBILE FULL-SCREEN FILTER DRAWER */}
       {mobileDrawerOpen && (
-        <div className="mobile-filter-overlay" onClick={() => setMobileDrawerOpen(false)}>
-          <div className="mobile-filter-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="mobile-sheet-header">
-              <span className="mobile-sheet-title">Filters ({activeCount} Active)</span>
-              <button className="mobile-sheet-close" onClick={() => setMobileDrawerOpen(false)}>
-                <X size={18} />
+        <div className="mobile-filter-drawer-overlay">
+          <div className="mobile-filter-drawer-content">
+            <div className="drawer-header-top">
+              <h3>Filter Jobs</h3>
+              <button 
+                type="button" 
+                className="btn-close-drawer"
+                onClick={() => setMobileDrawerOpen(false)}
+              >
+                <X size={20} />
               </button>
             </div>
-            <div className="mobile-sheet-body">
+
+            <div className="drawer-scrollable-body">
               {renderFilterContent()}
+            </div>
+
+            {/* STICKY BOTTOM BAR IN MOBILE DRAWER */}
+            <div className="mobile-drawer-sticky-bottom">
+              <button 
+                type="button"
+                className="btn-mobile-clear"
+                onClick={onResetFilters}
+              >
+                Clear All
+              </button>
+              <button 
+                type="button"
+                className="btn-mobile-show-jobs"
+                onClick={() => setMobileDrawerOpen(false)}
+              >
+                Show {matchingCount} Jobs
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Desktop Sticky Filter Sidebar */}
-      <aside className="filter-sidebar desktop-filter-sidebar">
-        {renderFilterContent()}
-      </aside>
     </>
   );
 };

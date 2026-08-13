@@ -158,27 +158,14 @@ const getEnrichment = (id: string, _name: string): CategoryEnrichment => {
     };
   }
 
-  // Deterministic generation based on string character codes
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const jobs = Math.abs((hash * 17) % 3500) + 150;
-  const companies = Math.abs((hash * 31) % 450) + 40;
-  const minSalary = Math.abs((hash * 13) % 40) + 40;
-  const maxSalary = minSalary + Math.abs((hash * 7) % 50) + 20;
-  const trendPercent = Math.abs((hash * 9) % 15) + 2;
-  
-  const defaultSkills = ["Management", "Operations", "Customer Service", "Scheduling", "Support"];
-  
   return {
-    liveJobs: jobs,
-    companiesHiring: companies,
-    avgSalaryMinUSD: minSalary * 1000,
-    avgSalaryMaxUSD: maxSalary * 1000,
-    trend: `+${trendPercent}%`,
+    liveJobs: 0,
+    companiesHiring: 0,
+    avgSalaryMinUSD: 0,
+    avgSalaryMaxUSD: 0,
+    trend: `0%`,
     trendUp: true,
-    topSkills: defaultSkills.slice(0, 5)
+    topSkills: []
   };
 };
 

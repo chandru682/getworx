@@ -26,6 +26,17 @@ import { type CurrencyCode, type RegionCode } from '../utils/currency';
 import { type Job } from './JobCard';
 import { type LangCode, getTranslation } from '../utils/translate';
 
+interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: 'CANDIDATE' | 'EMPLOYER' | 'RECRUITER' | 'ADMIN' | string;
+  avatar?: string;
+  company_name?: string;
+  subscription_status?: string;
+  notification_count?: number;
+}
+
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -45,6 +56,9 @@ interface NavbarProps {
   setVisaOnly: (visa: boolean) => void;
   activeLang: LangCode;
   setActiveLang: (lang: LangCode) => void;
+  user?: AuthUser | null;
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
 }
 
 interface NotificationItem {
@@ -69,7 +83,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   setSearchQuery,
   jobsList = [],
   activeLang,
-  setActiveLang
+  setActiveLang,
+  user,
+  isAuthenticated,
+  onLogout
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
@@ -95,49 +112,13 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'n-1',
-      title: '🌐 Global Relocation Opening Match',
-      message: 'Shopify Global (Canada) posted a Cloud DevOps role offering full visa sponsorship & relocation.',
-      time: '10 mins ago',
-      read: false,
-      type: 'job',
-      targetTab: 'jobs'
-    },
-    {
-      id: 'n-2',
-      title: 'Recruiter Profile View (Europe)',
-      message: 'Spotify Tech recruitment team in Stockholm viewed your developer profile.',
-      time: '1 hour ago',
-      read: false,
-      type: 'recruiter',
-      targetTab: 'profile',
-      targetSubTab: 'dashboard'
-    },
-    {
-      id: 'n-3',
-      title: 'Cross-Border Application Update',
-      message: 'Your application for Lead UI/UX Designer at Canva Sydney was shortlisted.',
-      time: '3 hours ago',
-      read: false,
-      type: 'application',
-      targetTab: 'profile',
-      targetSubTab: 'applied'
-    },
-    {
-      id: 'n-4',
-      title: 'Global ATS Score 96/100',
-      message: 'Your resume achieved 96% global compatibility across US, EU & APAC ATS parsers.',
-      time: 'Yesterday',
-      read: true,
-      type: 'system',
-      targetTab: 'resources',
-      targetSubTab: 'score-checker'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const userEmail = localStorage.getItem('getworxs_user_email') || 'employer@congihub.com';
+  const companyName = localStorage.getItem('getworxs_company_name') || (userEmail.includes('congihub') ? 'Congi Hub Private Limited' : 'Congi Hub Private Limited');
+  const avatarInitial = companyName ? companyName[0].toUpperCase() : 'C';
 
   const handleNavClick = (tab: string, subTab?: string) => {
     setActiveTab(tab);
@@ -418,7 +399,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', height: '36px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
             >
               <span style={{ fontSize: '14px', display: 'flex', alignItems: 'center' }}>🏢</span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>CHN Technologies</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>{companyName}</span>
               <ChevronDown size={12} style={{ marginLeft: '4px', color: '#64748b' }} />
             </button>
 
@@ -426,11 +407,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="dropdown-menu show" style={{ display: 'flex', position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: '220px', zIndex: 1000, padding: '8px' }}>
                 <div style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fef08a', color: '#ca8a04', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px' }}>
-                    C
+                    {avatarInitial}
                   </div>
                   <div>
-                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>CHN Technologies</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>muthukumar@chn.tech</div>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>{companyName}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{userEmail}</div>
                   </div>
                 </div>
 
@@ -528,15 +509,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Platform Console (Admin) */}
-                <div 
-                  className="dropdown-item" 
-                  onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#0F172A', background: 'rgba(109,40,217,0.06)', marginTop: 2 }}
-                >
-                  <span style={{ fontSize: 13 }}>⚙️</span>
-                  <span>Platform Console</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, background: '#FF1744', color: 'white', padding: '2px 6px', borderRadius: 99 }}>ADMIN</span>
-                </div>
+                {user?.role && (user.role.toUpperCase() === 'ADMIN' || user.role.toUpperCase() === 'SUPER_ADMIN' || user.role.toUpperCase() === 'PLATFORM_ADMIN') && (
+                  <div 
+                    className="dropdown-item" 
+                    onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#0F172A', background: 'rgba(109,40,217,0.06)', marginTop: 2 }}
+                  >
+                    <span style={{ fontSize: 13 }}>⚙️</span>
+                    <span>Platform Console</span>
+                    <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, background: '#FF1744', color: 'white', padding: '2px 6px', borderRadius: 99 }}>ADMIN</span>
+                  </div>
+                )}
 
                 <div className="dropdown-divider" style={{ margin: '6px 0' }} />
 
@@ -571,23 +554,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         <GetWorxsLogo onClick={() => handleNavClick('home')} />
 
         <ul className="navbar-menu hide-mobile">
-          {/* Home */}
-          <li className="navbar-item">
-            <a 
-              href="#home" 
-              className={`navbar-link ${activeTab === 'home' ? 'active' : ''}`}
-              onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}
-            >
-              {getTranslation(activeLang, 'home')}
-            </a>
-          </li>
-
           {/* Jobs */}
           <li className="navbar-item">
             <a 
               href="#jobs" 
               className={`navbar-link ${(activeTab === 'jobs' || activeTab.startsWith('jobs-')) ? 'active' : ''}`}
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => { e.preventDefault(); handleNavClick('jobs', ''); }}
             >
               {getTranslation(activeLang, 'jobs')} <ChevronDown size={14} />
             </a>
@@ -597,8 +569,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <a href="#startup-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('jobs', 'startup'); }}>{getTranslation(activeLang, 'startup_jobs')}</a>
               <a href="#ai-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('jobs', 'ai'); }}>{getTranslation(activeLang, 'ai_jobs')}</a>
               <a href="#internships" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('jobs', 'internship'); }}>{getTranslation(activeLang, 'internships')}</a>
-              <a href="#walk-in-jobs" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('jobs', 'walkin'); }}>{getTranslation(activeLang, 'walkin_jobs')}</a>
-              <a href="#top-companies" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('companies'); }}>{getTranslation(activeLang, 'top_companies')}</a>
             </div>
           </li>
 
@@ -613,20 +583,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             </a>
           </li>
 
-          {/* AI Services */}
+          {/* For Employers */}
           <li className="navbar-item">
             <a 
-              href="#resources" 
-              className={`navbar-link ${activeTab === 'resources' ? 'active' : ''}`}
-              onClick={(e) => e.preventDefault()}
+              href="#for-employers" 
+              className={`navbar-link ${activeTab === 'employer-auth' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); handleNavClick('employer-auth'); }}
+              style={{ color: '#0284c7', fontWeight: 700 }}
             >
-              {getTranslation(activeLang, 'ai_services')} <ChevronDown size={14} />
+              For Employers
             </a>
-            <div className="dropdown-menu">
-              <a href="#ai-interview" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('resources', 'mock-interview'); }}>{getTranslation(activeLang, 'mock_interview')}</a>
-              <a href="#resume-checker" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('resources', 'score-checker'); }}>{getTranslation(activeLang, 'resume_checker')}</a>
-              <a href="#salary-calculator" className="dropdown-item" onClick={(e) => { e.preventDefault(); handleNavClick('resources', 'salary-calc'); }}>{getTranslation(activeLang, 'salary_calc')}</a>
-            </div>
           </li>
         </ul>
       </div>
@@ -766,80 +732,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* Employer Switch Button */}
-        <button
-          className="global-nav-btn hide-mobile"
-          style={{
-            background: 'var(--color-primary-light)',
-            color: 'var(--color-primary)',
-            borderColor: 'var(--color-primary-border)',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            borderRadius: '99px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            marginRight: '8px',
-            border: '1px solid var(--color-primary-border)'
-          }}
-          onClick={() => handleNavClick('employer')}
-        >
-          <Building2 size={14} style={{ color: 'var(--color-primary)' }} />
-          <span>Employer Portal</span>
-        </button>
-
-        {/* Recruiter Switch Button */}
-        <button
-          className="global-nav-btn hide-mobile"
-          style={{
-            background: 'rgba(109, 40, 217, 0.08)',
-            color: '#6d28d9',
-            borderColor: 'rgba(109, 40, 217, 0.15)',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            borderRadius: '99px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            marginRight: '8px',
-            border: '1px solid rgba(109, 40, 217, 0.15)'
-          }}
-          onClick={() => handleNavClick('recruiter')}
-        >
-          <Sparkles size={14} style={{ color: '#6d28d9' }} />
-          <span>Recruiter Portal</span>
-        </button>
-
-        {/* Platform Console (Admin) Button */}
-        <button
-          className="global-nav-btn hide-mobile"
-          style={{
-            background: 'linear-gradient(135deg, #0F172A, #1E1B4B)',
-            color: '#ffffff',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            borderRadius: '99px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            marginRight: '8px',
-            border: '1px solid rgba(109, 40, 217, 0.4)',
-            boxShadow: '0 2px 8px rgba(109,40,217,0.25)'
-          }}
-          onClick={() => handleNavClick('admin')}
-        >
-          <span style={{ fontSize: 13 }}>⚙️</span>
-          <span>Console</span>
-          <span style={{ fontSize: 8, fontWeight: 900, background: '#FF1744', color: 'white', padding: '1px 5px', borderRadius: 99, letterSpacing: 0.5 }}>ADMIN</span>
-        </button>
-
-
         {/* Standalone Bell Notification Icon */}
         <div className="notification-bell-container" style={{ position: 'relative' }}>
           <button 
@@ -944,24 +836,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* User Account & Auth Pill Container (Matches User Image) */}
+        {/* User Account & Auth Pill Container */}
         <div style={{ position: 'relative' }}>
           <button 
             className="navbar-profile-pill"
             onClick={() => setShowAuthDropdown(!showAuthDropdown)}
             title="Account & Profile Menu"
           >
-            {/* Hamburger Icon */}
             <Menu size={18} className="pill-menu-icon" style={{ color: '#64748b' }} />
 
-            {/* User Avatar Circle with Notification Badge */}
             <div className="pill-avatar-wrapper">
-              <div className="pill-avatar-circle">
-                <User size={18} className="avatar-icon" />
-              </div>
-              <span className="pill-avatar-badge">
-                {unreadCount > 0 ? unreadCount : 2}
-              </span>
+              {isAuthenticated && user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.name} 
+                  style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <div className="pill-avatar-circle">
+                  <User size={18} className="avatar-icon" />
+                </div>
+              )}
+              {isAuthenticated && (
+                <span className="pill-avatar-badge">
+                  {user?.notification_count || unreadCount || 1}
+                </span>
+              )}
             </div>
           </button>
 
@@ -976,7 +876,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 top: 'calc(100% + 10px)', 
                 right: 0, 
                 left: 'auto',
-                width: '250px', 
+                width: '260px', 
                 maxWidth: 'calc(100vw - 32px)',
                 zIndex: 1000,
                 padding: '10px',
@@ -986,133 +886,158 @@ export const Navbar: React.FC<NavbarProps> = ({
                 border: '1px solid var(--border-color)'
               }}
             >
-              {/* Account Section */}
-              <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
-                ACCOUNT
-              </div>
-              
-              <div 
-                className="dropdown-item"
-                onClick={() => {
-                  handleNavClick('login');
-                  setShowAuthDropdown(false);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' }}
-              >
-                <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(109, 40, 217, 0.12)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <UserCheck size={17} />
-                </div>
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontWeight: '700', fontSize: '13.5px', color: 'var(--text-primary)' }}>{getTranslation(activeLang, 'login')}</div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Sign in to existing account</div>
-                </div>
-              </div>
+              {/* Authenticated User Header */}
+              {isAuthenticated && user ? (
+                <>
+                  <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'var(--bg-neutral-light)', borderRadius: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6d28d9, #9333ea)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '15px' }}>
+                      {user.name ? user.name[0].toUpperCase() : 'U'}
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontWeight: '800', fontSize: '14px', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--color-primary)', fontWeight: '700' }}>{user.role}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user.email}</div>
+                    </div>
+                  </div>
 
-              <div 
-                className="dropdown-item"
-                onClick={() => {
-                  handleNavClick('register');
-                  setShowAuthDropdown(false);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' }}
-              >
-                <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255, 23, 68, 0.12)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <User size={17} />
-                </div>
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontWeight: '700', fontSize: '13.5px', color: 'var(--text-primary)' }}>{getTranslation(activeLang, 'register')}</div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Create free candidate profile</div>
-                </div>
-              </div>
+                  <div className="dropdown-divider" style={{ margin: '8px 0' }} />
 
-              <div className="dropdown-divider" style={{ margin: '8px 0' }} />
+                  {/* Candidate Items */}
+                  {user.role === 'CANDIDATE' && (
+                    <>
+                      <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '2px 8px 4px' }}>CANDIDATE MENU</div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('profile', 'dashboard'); setShowAuthDropdown(false); }}>
+                        <User size={15} style={{ color: 'var(--color-primary)' }} /> <span>Profile</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('profile', 'applied'); setShowAuthDropdown(false); }}>
+                        <FileText size={15} style={{ color: 'var(--color-success)' }} /> <span>My Applications</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('profile', 'saved'); setShowAuthDropdown(false); }}>
+                        <Briefcase size={15} style={{ color: 'var(--color-secondary)' }} /> <span>Saved Jobs</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('profile', 'documents'); setShowAuthDropdown(false); }}>
+                        <FileText size={15} style={{ color: '#8b5cf6' }} /> <span>Resume</span>
+                      </div>
+                    </>
+                  )}
 
-              {/* Candidate Portal Section */}
-              <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
-                CANDIDATE PORTAL
-              </div>
+                  {/* Employer Items */}
+                  {user.role === 'EMPLOYER' && (
+                    <>
+                      <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '2px 8px 4px' }}>EMPLOYER MENU</div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('employer', 'overview'); setShowAuthDropdown(false); }}>
+                        <Building2 size={15} style={{ color: 'var(--color-primary)' }} /> <span>Company Profile</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('employer', 'overview'); setShowAuthDropdown(false); }}>
+                        <Briefcase size={15} style={{ color: '#0284c7' }} /> <span>Dashboard & Jobs</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('employer', 'settings'); setShowAuthDropdown(false); }}>
+                        <UserCheck size={15} style={{ color: '#6366f1' }} /> <span>Recruiters</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('employer', 'billing'); setShowAuthDropdown(false); }}>
+                        <CreditCard size={15} style={{ color: '#059669' }} /> <span>Subscription & Billing</span>
+                      </div>
+                    </>
+                  )}
 
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('profile', 'dashboard'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <User size={15} style={{ color: 'var(--color-primary)' }} />
-                <span>Candidate Hub</span>
-              </div>
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('profile', 'saved'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <Briefcase size={15} style={{ color: 'var(--color-secondary)' }} />
-                <span>Saved Jobs</span>
-              </div>
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('profile', 'applied'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <FileText size={15} style={{ color: 'var(--color-success)' }} />
-                <span>Applications</span>
-              </div>
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('profile', 'settings'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <Globe size={15} style={{ color: 'var(--text-muted)' }} />
-                <span>Global Settings</span>
-              </div>
+                  {/* Recruiter Items */}
+                  {user.role === 'RECRUITER' && (
+                    <>
+                      <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '2px 8px 4px' }}>RECRUITER MENU</div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('recruiter', 'dashboard'); setShowAuthDropdown(false); }}>
+                        <Sparkles size={15} style={{ color: '#6d28d9' }} /> <span>Dashboard</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('recruiter', 'jobs'); setShowAuthDropdown(false); }}>
+                        <Briefcase size={15} style={{ color: '#0284c7' }} /> <span>Assigned Jobs</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('recruiter', 'candidates'); setShowAuthDropdown(false); }}>
+                        <UserCheck size={15} style={{ color: '#059669' }} /> <span>Candidates</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('recruiter', 'interviews'); setShowAuthDropdown(false); }}>
+                        <MessageSquare size={15} style={{ color: '#f59e0b' }} /> <span>Interviews</span>
+                      </div>
+                    </>
+                  )}
 
-              <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+                  {/* Admin Items */}
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '2px 8px 4px' }}>ADMIN CONSOLE</div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}>
+                        <Settings size={15} style={{ color: '#FF1744' }} /> <span>Console Dashboard</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}>
+                        <Building2 size={15} style={{ color: '#0284c7' }} /> <span>Companies & Employers</span>
+                      </div>
+                      <div className="dropdown-item" onClick={() => { handleNavClick('admin'); setShowAuthDropdown(false); }}>
+                        <UserCheck size={15} style={{ color: '#059669' }} /> <span>Candidates & Recruiters</span>
+                      </div>
+                    </>
+                  )}
 
-              {/* Work Portals Section */}
-              <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
-                WORK PORTALS
-              </div>
+                  <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+                  <div className="dropdown-item" onClick={() => { handleNavClick(user.role === 'CANDIDATE' ? 'profile' : user.role.toLowerCase(), 'settings'); setShowAuthDropdown(false); }}>
+                    <Settings size={15} style={{ color: 'var(--text-muted)' }} /> <span>Settings</span>
+                  </div>
 
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('employer'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <Building2 size={15} style={{ color: 'var(--color-primary)' }} />
-                <span>Employer Portal</span>
-              </div>
+                  <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+                  <div 
+                    className="dropdown-item logout-item" 
+                    onClick={() => { 
+                      setShowAuthDropdown(false); 
+                      if (onLogout) onLogout(); 
+                    }}
+                    style={{ color: '#ef4444', fontWeight: '700' }}
+                  >
+                    <LogOut size={15} style={{ color: '#ef4444' }} /> <span>Logout</span>
+                  </div>
+                </>
+              ) : (
+                /* Unauthenticated Guest Navigation */
+                <>
+                  <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
+                    SIGN IN / REGISTER
+                  </div>
+                  
+                  <div 
+                    className="dropdown-item"
+                    onClick={() => { handleNavClick('login'); setShowAuthDropdown(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' }}
+                  >
+                    <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(109, 40, 217, 0.12)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <UserCheck size={17} />
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontWeight: '700', fontSize: '13.5px', color: 'var(--text-primary)' }}>Login</div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Candidate & Portal Access</div>
+                    </div>
+                  </div>
 
-              <div 
-                className="dropdown-item" 
-                onClick={() => { handleNavClick('recruiter'); setShowAuthDropdown(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '9px 12px', borderRadius: '8px', fontWeight: '600', fontSize: '13.5px' }}
-              >
-                <Sparkles size={15} style={{ color: '#6d28d9' }} />
-                <span>Recruiter Portal</span>
-              </div>
+                  <div 
+                    className="dropdown-item"
+                    onClick={() => { handleNavClick('register'); setShowAuthDropdown(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' }}
+                  >
+                    <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255, 23, 68, 0.12)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <User size={17} />
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontWeight: '700', fontSize: '13.5px', color: 'var(--text-primary)' }}>Register</div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Create free user account</div>
+                    </div>
+                  </div>
 
-              <div className="dropdown-divider" style={{ margin: '6px 0' }} />
+                  <div className="dropdown-divider" style={{ margin: '8px 0' }} />
 
-              <div 
-                className="dropdown-item logout-item" 
-                onClick={() => { 
-                  handleNavClick('home'); 
-                  setShowAuthDropdown(false); 
-                }}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px', 
-                  cursor: 'pointer', 
-                  padding: '9px 12px', 
-                  borderRadius: '8px', 
-                  fontWeight: '600', 
-                  fontSize: '13.5px',
-                  color: 'var(--color-accent)' 
-                }}
-              >
-                <LogOut size={15} style={{ color: 'var(--color-accent)' }} />
-                <span>{getTranslation(activeLang, 'logout')}</span>
-              </div>
+                  <div className="dropdown-header" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', padding: '4px 8px 6px', letterSpacing: '0.5px' }}>
+                    EMPLOYER ACCESS
+                  </div>
+
+                  <div className="dropdown-item" onClick={() => { handleNavClick('employer-auth'); setShowAuthDropdown(false); }}>
+                    <Building2 size={15} style={{ color: '#0284c7' }} /> <span>For Employers</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1190,13 +1115,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Company Directory</span>
               </button>
 
-              <button 
-                className={`mobile-drawer-nav-item ${activeTab === 'admin' ? 'active' : ''}`}
-                onClick={() => { handleNavClick('admin'); setIsMobileDrawerOpen(false); }}
-              >
-                <Settings size={18} style={{ color: '#ff1744' }} />
-                <span>Platform Console</span>
-              </button>
+              {user?.role && (user.role.toUpperCase() === 'ADMIN' || user.role.toUpperCase() === 'SUPER_ADMIN' || user.role.toUpperCase() === 'PLATFORM_ADMIN') && (
+                <button 
+                  className={`mobile-drawer-nav-item ${activeTab === 'admin' ? 'active' : ''}`}
+                  onClick={() => { handleNavClick('admin'); setIsMobileDrawerOpen(false); }}
+                >
+                  <Settings size={18} style={{ color: '#ff1744' }} />
+                  <span>Platform Console</span>
+                </button>
+              )}
 
               <div className="mobile-drawer-divider" />
 

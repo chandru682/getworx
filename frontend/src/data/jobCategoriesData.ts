@@ -135,7 +135,7 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'Non Voice',
       'Chat Support',
       'Email Support',
-      'Technical Support',
+      'Helpdesk & Tech Support',
       'Call Center',
       'BPO',
       'KPO'
@@ -152,7 +152,7 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'Civil',
       'Chemical',
       'Industrial',
-      'Production',
+      'Production Engineering',
       'Automobile',
       'Aerospace',
       'Marine',
@@ -164,9 +164,9 @@ export const JOB_CATEGORIES: JobCategory[] = [
     name: '8. Manufacturing',
     icon: 'Factory',
     subcategories: [
-      'Production',
+      'Plant Production',
       'Quality Control',
-      'Quality Assurance',
+      'Manufacturing QA',
       'Plant Operations',
       'Maintenance',
       'CNC',
@@ -217,9 +217,9 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'R&D',
       'Clinical Research',
       'Regulatory Affairs',
-      'Quality Assurance',
+      'Pharma QA & QC',
       'Drug Safety',
-      'Manufacturing',
+      'Pharma Manufacturing',
       'Medical Representative'
     ]
   },
@@ -272,9 +272,9 @@ export const JOB_CATEGORIES: JobCategory[] = [
     name: '15. Logistics & Supply Chain',
     icon: 'Truck',
     subcategories: [
-      'Warehouse',
+      'Logistics Warehouse',
       'Procurement',
-      'Inventory',
+      'Inventory Management',
       'Supply Chain',
       'Shipping',
       'Transportation',
@@ -318,12 +318,12 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'Video Editing',
       'Photography',
       'Cinematography',
-      'Graphic Design',
+      'Media Visual Design',
       'Animation',
       'VFX',
       'Music',
       'Acting',
-      'Radio',
+      'Radio Broadcasting',
       'TV'
     ]
   },
@@ -363,7 +363,7 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'Marketplace',
       'Catalog Management',
       'Seller Support',
-      'Warehouse',
+      'E-Com Warehouse & Fulfillment',
       'Fulfillment',
       'Operations'
     ]

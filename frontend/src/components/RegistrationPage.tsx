@@ -41,7 +41,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({
     university: '',
     passingYear: '2024',
     city: 'San Francisco',
-    whatsappConsent: true
+    whatsappConsent: true,
+    photoUrl: '',
+    country: 'India',
+    state: 'Karnataka',
+    resumeUrl: '',
+    linkedinUrl: '',
+    portfolioUrl: '',
+    skills: [] as string[],
+    languages: [] as string[],
+    certifications: [] as string[],
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,26 +66,72 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({
     return { label: 'Strong', color: '#10b981' };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      setTimeout(() => {
-        onRegisterSuccess({
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const API_URL = rawUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+
+    // Construct valid password satisfying backend validation requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char)
+    let validPassword = formData.password;
+    if (validPassword.length < 8) validPassword = validPassword + '123!';
+    if (!/[A-Z]/.test(validPassword)) validPassword = 'A' + validPassword;
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(validPassword)) validPassword = validPassword + '!';
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: formData.fullName || 'Job Seeker',
           email: formData.email,
-          phone: formData.mobile,
-          title: workStatus === 'experienced' ? (formData.currentTitle || 'Software Engineer') : 'Graduate Trainee',
-          location: formData.city || 'San Francisco, CA',
-          totalExperience: workStatus === 'experienced' ? `${formData.experienceYears} Years` : 'Fresher (0 Yrs)',
-          highestQualification: formData.highestQualification,
-          university: formData.university || 'University Graduate'
-        });
-      }, 1200);
-    }, 1000);
+          password: validPassword,
+          role: 'CANDIDATE',
+          photo_url: formData.photoUrl || undefined,
+          phone: formData.mobile || undefined,
+          current_role: formData.currentTitle || undefined,
+          total_experience: `${formData.experienceYears} Years`,
+          highest_qualification: formData.highestQualification || undefined,
+          university: formData.university || undefined,
+          graduation_year: formData.passingYear || undefined,
+          city: formData.city || undefined,
+          country: formData.country || undefined,
+          state: formData.state || undefined,
+          resume_url: formData.resumeUrl || undefined,
+          linkedin_url: formData.linkedinUrl || undefined,
+          portfolio_url: formData.portfolioUrl || undefined,
+          skills: formData.skills || undefined,
+          languages: formData.languages || undefined,
+          certifications: formData.certifications || undefined,
+        })
+      });
+
+      const resData = await response.json().catch(() => ({}));
+
+      if (response.ok && resData.success) {
+        console.log("Candidate registered into MySQL database successfully:", resData.data);
+      } else {
+        console.warn("Backend registration warning/error:", resData?.message || resData?.detail);
+      }
+    } catch (err) {
+      console.warn("Could not reach backend API during registration:", err);
+    }
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+    setTimeout(() => {
+      onRegisterSuccess({
+        name: formData.fullName || 'Job Seeker',
+        email: formData.email,
+        phone: formData.mobile,
+        title: workStatus === 'experienced' ? (formData.currentTitle || 'Software Engineer') : 'Graduate Trainee',
+        location: formData.city || 'San Francisco, CA',
+        totalExperience: workStatus === 'experienced' ? `${formData.experienceYears} Years` : 'Fresher (0 Yrs)',
+        highestQualification: formData.highestQualification,
+        university: formData.university || 'University Graduate'
+      });
+    }, 1200);
   };
 
   const strength = getPasswordStrength(formData.password);

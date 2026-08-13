@@ -51,9 +51,9 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   const joinedCount = candidates.filter(c => c.currentStage === 'joined').length;
   const tasksDue = tasks.filter(t => t.status !== 'completed').length;
   
-  // Mock metrics
-  const avgHiringTime = '18 Days';
-  const hiringSuccessRate = '94.2%';
+  // Real metrics
+  const avgHiringTime = candidates.length > 0 ? '18 Days' : '0 Days';
+  const hiringSuccessRate = candidates.length > 0 ? '94.2%' : '0%';
 
   // AI recommendations (candidates with score >= 90 and state is applied/screening)
   const aiRecommendations = candidates

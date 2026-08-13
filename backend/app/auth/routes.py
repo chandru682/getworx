@@ -3,7 +3,9 @@ from fastapi import APIRouter, Depends, status
 from app.auth.dependencies import get_auth_service, get_current_user
 from app.auth.models import User
 from app.auth.schemas import (
+    AuthMeResponse,
     ChangePasswordRequest,
+    FirstLoginChangePasswordRequest,
     ForgotPasswordRequest,
     LoginRequest,
     MessageResponse,
@@ -97,7 +99,7 @@ async def logout(
 
 @router.get(
     "/me",
-    response_model=ResponseEnvelope[UserResponse],
+    response_model=ResponseEnvelope[AuthMeResponse],
     status_code=status.HTTP_200_OK,
     summary="Get Current User Profile",
     description="Retrieves profile information for the authenticated user.",
@@ -170,3 +172,42 @@ async def change_password(
         message=res["message"],
         data=MessageResponse(message=res["message"]),
     )
+
+
+@router.post(
+    "/first-login-change-password",
+    response_model=ResponseEnvelope[TokenResponse],
+    status_code=status.HTTP_200_OK,
+    summary="First Login Password Change",
+    description="Updates password during first login for users with a temporary password and issues JWT access tokens.",
+)
+async def first_login_change_password(
+    data: FirstLoginChangePasswordRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    tokens = await service.first_login_change_password(data)
+    return ResponseEnvelope(
+        success=True,
+        message="Password updated successfully. Access granted.",
+        data=tokens,
+    )
+
+
+@router.get(
+    "/candidates",
+    response_model=ResponseEnvelope[list[UserResponse]],
+    status_code=status.HTTP_200_OK,
+    summary="Get All Candidates",
+    description="Retrieves list of registered jobseekers/candidates for Admin Console.",
+)
+async def get_candidates(
+    service: AuthService = Depends(get_auth_service),
+):
+    candidates = await service.get_all_candidates()
+    return ResponseEnvelope(
+        success=True,
+        message="Candidates retrieved successfully",
+        data=candidates,
+    )
+
+

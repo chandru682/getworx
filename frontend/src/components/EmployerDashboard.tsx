@@ -17,19 +17,59 @@ import {
   Phone, 
   MapPin, 
   Award, 
-  FileText, 
   Check, 
   X, 
-  ChevronRight, 
   Paperclip, 
   Send, 
   Plus, 
   Key, 
   Clock, 
   FileDown,
-  Info
+  Info,
+  CheckCircle2,
+  Copy,
+  ShieldCheck,
+  RefreshCcw,
+  AlertTriangle,
+  Crown,
+  Bell,
+  UserPlus,
 } from 'lucide-react';
 import './EmployerDashboard.css';
+import { CompanyVerificationStatus, type CompanyVerificationData } from './CompanyVerificationStatus';
+import { SubscriptionPlansModal } from './SubscriptionPlansModal';
+import { TalentSearchTab } from './employer/TalentSearchTab';
+import { SubscriptionCheckoutModal } from './SubscriptionCheckoutModal';
+import { type CurrencyCode } from '../utils/currency';
+import RawJobCreationWizard from './JobCreationWizard';
+import { useNotifications } from '../utils/useNotifications';
+import { ApplicationAPI } from '../utils/api';
+import RawCountUp from 'react-countup';
+import { ResponsiveContainer, LineChart, XAxis, YAxis, Tooltip, Line } from 'recharts';
+
+const CountUpComponent: any = typeof RawCountUp === 'function'
+  ? RawCountUp
+  : (RawCountUp as any)?.CountUp || (RawCountUp as any)?.default;
+
+const CountUp = (props: any) => {
+  if (typeof CountUpComponent === 'function') {
+    try {
+      return <CountUpComponent {...props} />;
+    } catch {
+      return <span>{props.prefix || ''}{props.end}{props.suffix || ''}</span>;
+    }
+  }
+  return <span>{props.prefix || ''}{props.end}{props.suffix || ''}</span>;
+};
+
+const JobCreationWizardComponent: any = typeof RawJobCreationWizard === 'function'
+  ? RawJobCreationWizard
+  : (RawJobCreationWizard as any)?.default || RawJobCreationWizard;
+
+const JobCreationWizard = (props: any) => {
+  return <JobCreationWizardComponent {...props} />;
+};
+
 
 // ==========================================
 // Mock Database Definitions
@@ -97,218 +137,60 @@ interface RecruiterTeam {
   name: string;
   email: string;
   role: 'Admin' | 'Recruiter' | 'Interviewer';
-  status: 'Active' | 'Pending';
+  status: 'Active' | 'Pending' | 'Invited' | 'Email Failed';
+  email_sent?: boolean;
+  warning?: string | null;
 }
 
-const initialJobsData: RecruiterJob[] = [
-  {
-    id: 'job-101',
-    title: 'Senior React Developer',
-    location: 'Bengaluru, India (Hybrid)',
-    employmentType: 'Full-time',
-    applicationsCount: 24,
-    status: 'active',
-    postedDate: '2026-07-20',
-    industry: 'Technology',
-    experience: '5-8 years',
-    department: 'Engineering'
-  },
-  {
-    id: 'job-102',
-    title: 'Lead UI/UX Architect',
-    location: 'London, UK (Remote)',
-    employmentType: 'Full-time',
-    applicationsCount: 12,
-    status: 'active',
-    postedDate: '2026-07-22',
-    industry: 'Design',
-    experience: '8+ years',
-    department: 'Product Design'
-  },
-  {
-    id: 'job-103',
-    title: 'HR Business Partner',
-    location: 'Mumbai, India (In-office)',
-    employmentType: 'Full-time',
-    applicationsCount: 4,
-    status: 'paused',
-    postedDate: '2026-07-15',
-    industry: 'Human Resources',
-    experience: '3-5 years',
-    department: 'People Operations'
-  },
-  {
-    id: 'job-104',
-    title: 'Node.js Developer (Junior)',
-    location: 'San Francisco, USA (Hybrid)',
-    employmentType: 'Internship',
-    applicationsCount: 8,
-    status: 'draft',
-    postedDate: '2026-07-25',
-    industry: 'Technology',
-    experience: '1-3 years',
-    department: 'Engineering'
-  }
-];
 
-const initialCandidatesData: Candidate[] = [
-  {
-    id: 'cand-1',
-    name: 'Aishwarya Nair',
-    avatar: 'AN',
-    email: 'aishwarya.nair@example.com',
-    phone: '+91 98765 43210',
-    location: 'Bengaluru, India',
-    aiMatchScore: 96,
-    experienceYears: 6,
-    skills: ['React', 'TypeScript', 'Redux Toolkit', 'TailwindCSS', 'System Design'],
-    currentRole: 'Senior Frontend Engineer',
-    currentCompany: 'TechnoLabs Solutions',
-    education: 'B.Tech in Computer Science - NIT Calicut',
-    portfolioUrl: 'https://aishwaryacodes.dev',
-    resumeUrl: 'aishwarya_nair_resume.pdf',
-    status: 'shortlisted',
-    appliedJobId: 'job-101',
-    appliedJobTitle: 'Senior React Developer',
-    interviewNotes: [
-      'Strong architecture understanding of micro-frontends.',
-      'Excellent communicator. Answered React 19 fiber questions flawlessly.'
-    ],
-    timeline: [
-      { id: 't-1', event: 'Applied via GetWorxs', date: '2026-07-21', description: 'Matched with 96% confidence score.', type: 'success' },
-      { id: 't-2', event: 'Profile Viewed', date: '2026-07-22', description: 'Reviewed by Hiring Manager.', type: 'info' },
-      { id: 't-3', event: 'Moved to Shortlist', date: '2026-07-23', description: 'Scheduled for Technical Screening.', type: 'success' }
-    ]
-  },
-  {
-    id: 'cand-2',
-    name: 'Marcus Vance',
-    avatar: 'MV',
-    email: 'marcus.vance@example.com',
-    phone: '+44 7911 123456',
-    location: 'London, UK',
-    aiMatchScore: 92,
-    experienceYears: 9,
-    skills: ['Figma', 'UI/UX Design', 'Design Systems', 'Ashby', 'User Research', 'Prototyping'],
-    currentRole: 'Lead Product Designer',
-    currentCompany: 'RetailChain Corp',
-    education: 'MA in Interaction Design - Royal College of Art',
-    portfolioUrl: 'https://marcusvance.co',
-    resumeUrl: 'marcus_vance_designer.pdf',
-    status: 'interview',
-    appliedJobId: 'job-102',
-    appliedJobTitle: 'Lead UI/UX Architect',
-    interviewNotes: [
-      'Clean visual style. Deep expertise in Stripe-like minimal interfaces.',
-      'Needs visa sponsorships in the long run.'
-    ],
-    timeline: [
-      { id: 't-4', event: 'Applied', date: '2026-07-22', description: 'Applied to Lead UI/UX Architect.', type: 'success' },
-      { id: 't-5', event: 'Shortlisted', date: '2026-07-23', description: 'Moved to interview queue.', type: 'success' },
-      { id: 't-6', event: 'Round 1 Scheduled', date: '2026-07-25', description: 'Portfolio walk-through with team.', type: 'info' }
-    ]
-  },
-  {
-    id: 'cand-3',
-    name: 'Rahul Sharma',
-    avatar: 'RS',
-    email: 'rahul.sharma@example.com',
-    phone: '+91 99887 76655',
-    location: 'Mumbai, India',
-    aiMatchScore: 84,
-    experienceYears: 4,
-    skills: ['Talent Acquisition', 'Onboarding', 'HR Operations', 'Workday'],
-    currentRole: 'HR Associate',
-    currentCompany: 'Global Fintech Ltd',
-    education: 'MBA in Human Resources - NMIMS Mumbai',
-    portfolioUrl: '',
-    resumeUrl: 'rahul_sharma_hr.pdf',
-    status: 'new',
-    appliedJobId: 'job-103',
-    appliedJobTitle: 'HR Business Partner',
-    interviewNotes: [],
-    timeline: [
-      { id: 't-7', event: 'Application Submitted', date: '2026-07-26', description: 'Pending recruiter review.', type: 'info' }
-    ]
-  },
-  {
-    id: 'cand-4',
-    name: 'Emily Watson',
-    avatar: 'EW',
-    email: 'emily.w@example.com',
-    phone: '+1 415 987 6543',
-    location: 'San Francisco, USA',
-    aiMatchScore: 78,
-    experienceYears: 2,
-    skills: ['Node.js', 'Express', 'MongoDB', 'JavaScript'],
-    currentRole: 'Software Intern',
-    currentCompany: 'ByteSize Tech',
-    education: 'BS in Computer Science - UC Berkeley',
-    portfolioUrl: 'https://emilycodes.io',
-    resumeUrl: 'emily_watson_resume.pdf',
-    status: 'viewed',
-    appliedJobId: 'job-104',
-    appliedJobTitle: 'Node.js Developer (Junior)',
-    interviewNotes: ['Solid database concepts, needs hand-holding on AWS.'],
-    timeline: [
-      { id: 't-8', event: 'Applied', date: '2026-07-25', description: 'Applied via GetWorxs system.', type: 'success' },
-      { id: 't-9', event: 'Profile Opened', date: '2026-07-26', description: 'Recruiter opened resume profile.', type: 'info' }
-    ]
-  }
-];
-
-const initialThreads: MessageThread[] = [
-  {
-    id: 'th-1',
-    candidateName: 'Aishwarya Nair',
-    avatar: 'AN',
-    unread: true,
-    excerpt: 'Hi, I have uploaded my updated experience summary. Looking forward to...',
-    messages: [
-      { id: 'm-1', sender: 'recruiter', text: 'Hello Aishwarya, thanks for applying. Your profile looks impressive! Can we connect for a brief 15 min chat on Tuesday?', time: 'Jul 25, 10:30 AM' },
-      { id: 'm-2', sender: 'candidate', text: 'Hi! Yes, I am free on Tuesday from 2:00 PM to 5:00 PM IST. Tuesday works perfectly.', time: 'Jul 25, 11:15 AM' },
-      { id: 'm-3', sender: 'recruiter', text: 'Awesome, scheduled! I sent a calendar link.', time: 'Jul 25, 11:20 AM' },
-      { id: 'm-4', sender: 'candidate', text: 'Hi, I have uploaded my updated experience summary. Looking forward to speaking!', time: 'Jul 26, 4:02 PM' }
-    ]
-  },
-  {
-    id: 'th-2',
-    candidateName: 'Marcus Vance',
-    avatar: 'MV',
-    unread: false,
-    excerpt: 'Thanks! I will review the team details before the call.',
-    messages: [
-      { id: 'm-5', sender: 'recruiter', text: 'Hi Marcus, looking forward to our portfolio review session tomorrow.', time: 'Jul 24, 3:00 PM' },
-      { id: 'm-6', sender: 'candidate', text: 'Thanks! I will review the team details before the call.', time: 'Jul 24, 3:45 PM' }
-    ]
-  }
-];
-
-const initialTeamData: RecruiterTeam[] = [
-  { id: 'team-1', name: 'Sarah Connor', email: 's.connor@getworxs.com', role: 'Admin', status: 'Active' },
-  { id: 'team-2', name: 'James Carter', email: 'j.carter@getworxs.com', role: 'Recruiter', status: 'Active' },
-  { id: 'team-3', name: 'Elena Rostova', email: 'e.rostova@getworxs.com', role: 'Interviewer', status: 'Pending' }
-];
 
 interface EmployerDashboardProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
+  onJobPublished?: () => void;
 }
 
 export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({
   activeTab: externalActiveTab,
-  setActiveTab: externalSetActiveTab
+  setActiveTab: externalSetActiveTab,
+  onJobPublished
 }) => {
   const [internalActiveTab, setInternalActiveTab] = useState('overview');
   const activeTab = externalActiveTab || internalActiveTab;
   const setActiveTab = externalSetActiveTab || setInternalActiveTab;
 
   // Database State
-  const [jobs, setJobs] = useState<RecruiterJob[]>(initialJobsData);
-  const [candidates, setCandidates] = useState<Candidate[]>(initialCandidatesData);
-  const [threads, setThreads] = useState<MessageThread[]>(initialThreads);
-  const [activeThreadId, setActiveThreadId] = useState('th-1');
-  const [team, setTeam] = useState<RecruiterTeam[]>(initialTeamData);
+  // Dashboard data fetched from backend
+  const [dashboard, setDashboard] = useState<any>(null);
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+
+  // Fetch dashboard on mount
+  const fetchDashboard = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/dashboard`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch dashboard');
+      const data = await res.json();
+      setDashboard(data?.data || data);
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+    }
+  };
+
+  function getTimeOfDay() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Morning';
+    if (hour < 18) return 'Afternoon';
+    return 'Evening';
+  }
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
 
   // Search and Filter States for Jobs
   const [jobSearch, setJobSearch] = useState('');
@@ -320,41 +202,19 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({
   const [candStatusFilter, setCandStatusFilter] = useState('all');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [candProfileTab, setCandProfileTab] = useState<'resume' | 'timeline' | 'notes'>('resume');
+
+  // Data State
+  const [jobs, setJobs] = useState<RecruiterJob[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [threads, setThreads] = useState<MessageThread[]>([]);
+  const [team, setTeam] = useState<RecruiterTeam[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [newNoteText, setNewNoteText] = useState('');
 
   // Messages Input state
   const [chatMessage, setChatMessage] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
-  // Create Job Step Form State
-  const [jobFormStep, setJobFormStep] = useState(1);
-  const [jobForm, setJobForm] = useState({
-    title: 'Senior Software Engineer',
-    location: 'Chennai, Tamil Nadu',
-    industry: 'Technology',
-    department: 'Software Development',
-    category: 'Backend Development',
-    role: 'Back End Developer',
-    employmentType: 'Full Time, Permanent',
-    experienceMin: '1 year',
-    experienceMax: '3 years',
-    freshersCanApply: false,
-    technologies: ['Emerging Technologies'],
-    diversityHiring: {
-      women: false,
-      womenReturning: false,
-      defence: false,
-      disabled: false
-    },
-    videoProfileNeeded: false,
-    description: `Role & responsibilities:\nOutline the day-to-day responsibilities for this role.\n\nPreferred candidate profile:\nSpecify required role expertise, previous job experience, or relevant certifications.`,
-    screeningQuestions: [] as string[],
-    isWalkin: false,
-    teamMembers: ['muthukumar@chn.technologies'],
-    emailResponses: 'Only you will receive responses',
-    referenceCode: '',
-    autoRefresh: false
-  });
 
   // Scheduling Interview form inside candidate drawer
   const [isScheduling, setIsScheduling] = useState(false);
@@ -373,141 +233,562 @@ export const EmployerDashboard: React.FC<EmployerDashboardProps> = ({
     notificationEmails: true,
     requireMfa: false
   });
+
+  // Company Verification Approval State Guard
+  const [companyState, setCompanyState] = useState<CompanyVerificationData>({
+    id: 0,
+    name: '',
+    legal_name: '',
+    company_code: '',
+    industry: '',
+    company_size: '',
+    email: '',
+    phone: '',
+    country: '',
+    state: '',
+    city: '',
+    address: '',
+    postal_code: '',
+    approval_status: 'pending_verification',
+    submitted_at: new Date().toISOString(),
+    is_verified: false,
+    documents: []
+  });
+  const [companyLoading, setCompanyLoading] = useState(true);
+
+  const [profileAbout, setProfileAbout] = useState('');
+  const [profileCulture, setProfileCulture] = useState("To organize the world's information and make it universally accessible and useful.");
+  const [profileWebsite, setProfileWebsite] = useState('');
+  const [profileOfficeHubs, setProfileOfficeHubs] = useState('');
+  const [profileCompanySize, setProfileCompanySize] = useState('');
+  const [profileIndustry, setProfileIndustry] = useState('');
+
+  useEffect(() => {
+    if (companyState) {
+      setProfileAbout(companyState.description || '');
+      setProfileWebsite(companyState.website || '');
+      setProfileCompanySize(companyState.company_size || '50-200');
+      setProfileIndustry(companyState.industry || '');
+      setProfileOfficeHubs(companyState.address || '');
+    }
+  }, [companyState]);
+
+  const handleSaveBranding = async () => {
+    const token = localStorage.getItem('getworxs_access_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    if (!token) {
+      alert('You must be logged in to update company profile details.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/companies/${companyState.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          description: profileAbout,
+          website: profileWebsite,
+          company_size: profileCompanySize,
+          address: profileOfficeHubs,
+          industry: profileIndustry || companyState.industry || 'Technology'
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          const updated = data.data;
+          setCompanyState(prev => ({
+            ...prev,
+            description: updated.description,
+            website: updated.website,
+            company_size: updated.company_size,
+            address: updated.address,
+            logo_url: updated.logo_url,
+            name: updated.name,
+            industry: updated.industry
+          }));
+          alert('Company profile changes saved successfully!');
+        } else {
+          alert('Failed to save changes: ' + (data.message || 'Unknown error'));
+        }
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert('Failed to save changes: ' + (errorData?.detail || errorData?.message || 'Server error'));
+      }
+    } catch (err: any) {
+      alert('Error updating company profile: ' + (err.message || 'Network error'));
+    }
+  };
+
+
+  const fetchJobs = async () => {
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const API_URL = rawUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+    const token = localStorage.getItem('getworxs_access_token') || localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/jobs?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data && Array.isArray(data.data.items)) {
+          const mapped = data.data.items.map((j: any) => ({
+            id: String(j.id),
+            title: j.title,
+            location: j.city ? `${j.city}, ${j.state}` : j.country,
+            employmentType: j.employment_type,
+            applicationsCount: typeof j.applications_count === 'number' ? j.applications_count : 0,
+            status: j.status.toLowerCase() as any,
+            postedDate: j.created_at ? new Date(j.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            industry: j.industry_exp || 'Technology',
+            experience: `${j.experience_min} to ${j.experience_max} years`,
+            department: j.department
+          }));
+          setJobs(mapped);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch jobs from API:', err);
+    }
+  };
+
+  const handleEditJob = async (jobId: string) => {
+    setIsEditingLoading(true);
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const API_URL = rawUrl.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+    const token = localStorage.getItem('getworxs_access_token') || localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/jobs/${jobId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setEditingJob(json.data);
+          setActiveTab('create-job');
+        } else {
+          alert('Failed to load job details.');
+        }
+      } else {
+        alert('Failed to fetch job details from server.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while loading job.');
+    } finally {
+      setIsEditingLoading(false);
+    }
+  };
+
+  const fetchCandidates = async () => {
+    try {
+      const data = await ApplicationAPI.listCompany(1, 100);
+      if (data && Array.isArray(data.items)) {
+        const jobAppCounts: Record<string, number> = {};
+        const mapped = data.items.map((app: any) => {
+            const nameStr = app.candidate?.name || 'Candidate';
+            const initials = nameStr.split(' ').map((n: any) => n[0]).slice(0,2).join('').toUpperCase();
+            
+            const jobIdStr = String(app.job_id);
+            jobAppCounts[jobIdStr] = (jobAppCounts[jobIdStr] || 0) + 1;
+
+            const statusMap: Record<string, string> = {
+              'Applied': 'new',
+              'Viewed': 'viewed',
+              'Shortlisted': 'shortlisted',
+              'Interview Scheduled': 'interview',
+              'Interview Completed': 'interview',
+              'Selected': 'selected',
+              'Offer Sent': 'selected',
+              'Hired': 'selected',
+              'Rejected': 'rejected',
+              'Withdrawn': 'rejected'
+            };
+            const currentStatus = statusMap[app.status] || 'new';
+            
+            const timeline = (app.status_history_json || []).map((hist: any, idx: number) => ({
+              id: `t-${idx}-${app.id}`,
+              event: hist.status,
+              date: hist.changed_at ? hist.changed_at.split('T')[0] : new Date().toISOString().split('T')[0],
+              description: hist.note || `Status changed to ${hist.status}`,
+              type: ['Shortlisted', 'Selected', 'Hired', 'Offer Sent'].includes(hist.status) ? 'success' : ['Rejected', 'Withdrawn'].includes(hist.status) ? 'accent' : 'info'
+            }));
+
+            const skillsArr = app.candidate?.candidate_profile?.skills_json 
+              ? (typeof app.candidate.candidate_profile.skills_json === 'string' 
+                  ? JSON.parse(app.candidate.candidate_profile.skills_json) 
+                  : app.candidate.candidate_profile.skills_json) 
+              : (app.candidate?.candidate_profile?.skills || ['Software Development']);
+
+            return {
+              id: String(app.id),
+              name: nameStr,
+              avatar: initials,
+              email: app.candidate?.email || '',
+              phone: app.candidate?.phone || app.candidate?.candidate_profile?.phone || '',
+              location: app.candidate?.candidate_profile?.city 
+                ? `${app.candidate.candidate_profile.city}, ${app.candidate.candidate_profile.country}` 
+                : (app.candidate?.candidate_profile?.country || 'Remote'),
+              aiMatchScore: app.candidate?.candidate_profile?.profile_completion_percentage || 85,
+              experienceYears: parseInt(app.candidate?.candidate_profile?.total_experience) || 2,
+              skills: Array.isArray(skillsArr) ? skillsArr : ['Software Development'],
+              currentRole: app.candidate?.candidate_profile?.current_role || 'Jobseeker',
+              currentCompany: app.candidate?.candidate_profile?.university || 'Graduate',
+              education: app.candidate?.candidate_profile?.highest_qualification || 'Degree',
+              portfolioUrl: app.candidate?.candidate_profile?.portfolio_url || '',
+              resumeUrl: app.resume_url || app.candidate?.candidate_profile?.resume_url || '',
+              status: currentStatus as any,
+              appliedJobId: jobIdStr,
+              appliedJobTitle: app.job_title || 'Global Role',
+              interviewNotes: app.notes_json || [],
+              timeline: timeline
+            };
+          });
+          setCandidates(mapped);
+
+          // Update applicationsCount on jobs state based on candidates count
+          setJobs(prevJobs => prevJobs.map(j => ({
+            ...j,
+            applicationsCount: Math.max(j.applicationsCount, jobAppCounts[j.id] || 0)
+          })));
+      }
+    } catch (err) {
+      console.warn('Failed to fetch company applications:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (companyState.approval_status === 'approved') {
+      fetchJobs();
+      fetchCandidates();
+    }
+  }, [companyState.approval_status]);
+
+
   const [apiKeys, setApiKeys] = useState<{key: string; label: string; created: string}[]>([
     { key: 'gw_live_a8f9c1...2c', label: 'Production API Key', created: '2026-03-12' }
   ]);
 
-  // AI JD Generator Mock
-  const handleGenerateAIJD = () => {
-    if (!jobForm.title) {
-      alert('Please enter a Job Title first to generate a relevant Job Description!');
-      return;
-    }
-    const generated = `Role & responsibilities:
-We are seeking a high-caliber **${jobForm.title}** to join our team in **${jobForm.location}**.
-In this Software Development role under **${jobForm.department}**, you will design, develop, and maintain clean Backend/Frontend features.
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showOutboxModal, setShowOutboxModal] = useState(false);
+  const [previewEmailItem, setPreviewEmailItem] = useState<any>(null);
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'Admin' | 'Recruiter' | 'Interviewer'>('Recruiter');
+  const [isInviting, setIsInviting] = useState(false);
+  const [copiedPass, setCopiedPass] = useState(false);
+  // Resend invitation state
+  const [isResending, setIsResending] = useState<string | null>(null); // stores the email being resent
 
-Preferred candidate profile:
-- Required work experience: **${jobForm.experienceMin} to ${jobForm.experienceMax}**.
-- Solid experience working with: **${jobForm.technologies.join(', ') || 'React, TypeScript, Node.js'}**.
-- Selected Candidate will collaborate in a **${jobForm.employmentType}** capacity.`;
-    
-    setJobForm(prev => ({ ...prev, description: generated }));
+  const [inviteSuccessInfo, setInviteSuccessInfo] = useState<{
+    name: string;
+    email: string;
+    role: string;
+    companyName: string;
+    tempPassword: string;
+    message: string;
+    emailSent?: boolean;
+    warning?: string | null;
+  } | null>(null);
+
+  // Subscription Onboarding & Access Control State
+  const [accessStatus, setAccessStatus] = useState<{
+    is_dashboard_unlocked: boolean;
+    subscription_status: string;
+    company_status: string;
+    must_change_password: boolean;
+    message: string;
+    allowed_features: string[];
+    active_subscription: any;
+  }>({
+    is_dashboard_unlocked: true,
+    subscription_status: 'ACTIVE',
+    company_status: 'approved',
+    must_change_password: false,
+    message: '',
+    allowed_features: ['create_job', 'publish_job', 'recruiter_management', 'resume_search', 'candidate_unlock', 'ai_hiring_features'],
+    active_subscription: null
+  });
+  const [showPlansModal, setShowPlansModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<any>(null);
+  const [checkoutCurrency, setCheckoutCurrency] = useState<CurrencyCode>('USD');
+  const [subscriptionCurrency, setSubscriptionCurrency] = useState<'USD' | 'INR'>('USD');
+  const [showRecruiterLimitModal, setShowRecruiterLimitModal] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
+  const [isEditingLoading, setIsEditingLoading] = useState(false);
+
+
+  // Load recruiter team from API on mount and when companyState.name or settings.companyName changes
+
+  useEffect(() => {
+    const loadRecruiters = async () => {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const compName = companyState.name || settings.companyName || localStorage.getItem('getworxs_company_name') || '';
+      try {
+        const url = compName
+          ? `${API_URL}/api/v1/companies/recruiters?company_name=${encodeURIComponent(compName)}`
+          : `${API_URL}/api/v1/companies/recruiters`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            const teamMap = new Map<string, RecruiterTeam>();
+            data.data.forEach((r: any) => {
+              const emailKey = (r.recruiter_email || '').toLowerCase();
+              if (emailKey && !teamMap.has(emailKey)) {
+                teamMap.set(emailKey, {
+                  id: String(r.id),
+                  name: r.recruiter_name,
+                  email: r.recruiter_email,
+                  role: (r.role as 'Admin' | 'Recruiter' | 'Interviewer') || 'Recruiter',
+                  status: (r.status as 'Active' | 'Pending' | 'Invited' | 'Email Failed') || 'Pending',
+                  email_sent: r.status === 'Invited',
+                });
+              }
+            });
+            setTeam(Array.from(teamMap.values()));
+          }
+        }
+      } catch {
+        // API unavailable — retain existing state (localStorage fallback is sufficient)
+      }
+    };
+    loadRecruiters();
+  }, [companyState.name, settings.companyName]);
+
+
+  const handleInviteRecruiterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteName.trim() || !inviteEmail.trim()) return;
+
+    setIsInviting(true);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const compName = companyState.name || settings.companyName || localStorage.getItem('getworxs_company_name') || 'Enterprise';
+    let tempPassword = `Recruiter@${Math.random().toString(36).substring(2, 6).toUpperCase()}!2026`;
+    let message = `Recruiter '${inviteName}' invitation sent for company '${compName}'.`;
+    let emailSent = true;
+    let warning: string | null = null;
+    let inviteStatus: 'Invited' | 'Email Failed' | 'Pending' = 'Pending';
+
+    try {
+      const token = localStorage.getItem('getworxs_access_token');
+      const res = await fetch(`${API_URL}/api/v1/companies/invite-recruiter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: inviteName,
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          company_name: compName
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && data.data) {
+        tempPassword = data.data.temporary_password || tempPassword;
+        message = data.data.message || message;
+        emailSent = data.data.email_sent !== false;
+        warning = data.data.warning || null;
+        inviteStatus = data.data.status === 'Invited' ? 'Invited' : (data.data.status === 'Email Failed' ? 'Email Failed' : 'Pending');
+      }
+    } catch (err) {
+      console.warn('Backend invite failed, falling back to client-side mode:', err);
+      inviteStatus = 'Pending';
+    }
+
+    // Update local recruiter team state (deduplicated by email)
+    const newMember: RecruiterTeam = {
+      id: `team-${Date.now()}`,
+      name: inviteName.trim(),
+      email: inviteEmail.trim(),
+      role: inviteRole,
+      status: inviteStatus,
+      email_sent: emailSent,
+      warning,
+    };
+    setTeam(prev => {
+      const filtered = prev.filter(t => t.email.toLowerCase() !== inviteEmail.trim().toLowerCase());
+      return [...filtered, newMember];
+    });
+
+    // Save invited recruiter to localStorage for role detection on login (deduplicated by email)
+    try {
+      const existing = JSON.parse(localStorage.getItem('getworxs_invited_recruiters') || '[]');
+      const filtered = Array.isArray(existing) ? existing.filter((item: any) => item.email && item.email.toLowerCase() !== inviteEmail.trim().toLowerCase()) : [];
+      filtered.unshift({
+        name: inviteName.trim(),
+        email: inviteEmail.trim().toLowerCase(),
+        companyName: compName,
+        role: inviteRole,
+        tempPassword: tempPassword
+      });
+      localStorage.setItem('getworxs_invited_recruiters', JSON.stringify(filtered));
+    } catch (e) {
+      console.error('Failed to store invited recruiter in localStorage:', e);
+    }
+
+
+    setIsInviting(false);
+    setInviteSuccessInfo({
+      name: inviteName,
+      email: inviteEmail,
+      role: inviteRole,
+      companyName: compName,
+      tempPassword,
+      message,
+      emailSent,
+      warning,
+    });
   };
 
-  const handlePublishJob = () => {
-    const newJob: RecruiterJob = {
-      id: `job-${Date.now()}`,
-      title: jobForm.title || 'Untitled Role',
-      location: jobForm.location || 'Remote',
-      employmentType: jobForm.employmentType || 'Full-time',
-      applicationsCount: 0,
-      status: 'active',
-      postedDate: new Date().toISOString().split('T')[0],
-      industry: jobForm.industry,
-      experience: `${jobForm.experienceMin} to ${jobForm.experienceMax}`,
-      department: jobForm.department
-    };
+  const handleResendInvite = async (email: string) => {
+    setIsResending(email);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    try {
+      const token = localStorage.getItem('getworxs_access_token');
+      const res = await fetch(`${API_URL}/api/v1/companies/resend-recruiter-invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && data.data) {
+        const emailSent = data.data.email_sent !== false;
+        const newStatus: RecruiterTeam['status'] = emailSent ? 'Invited' : 'Email Failed';
+        setTeam(prev => prev.map(m =>
+          m.email === email
+            ? { ...m, status: newStatus, email_sent: emailSent, warning: data.data.warning || null }
+            : m
+        ));
+        if (!emailSent && data.data.warning) {
+          alert(`⚠️ ${data.data.warning}`);
+        }
+      } else {
+        alert('Resend failed: ' + (data?.error?.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Network error while resending invitation. Please try again.');
+    } finally {
+      setIsResending(null);
+    }
+  };
 
-    setJobs(prev => [newJob, ...prev]);
-    alert('Job published successfully!');
-    setActiveTab('jobs');
-    // Reset form
-    setJobForm({
-      title: 'Senior Software Engineer',
-      location: 'Chennai, Tamil Nadu',
-      industry: 'Technology',
-      department: 'Software Development',
-      category: 'Backend Development',
-      role: 'Back End Developer',
-      employmentType: 'Full Time, Permanent',
-      experienceMin: '1 year',
-      experienceMax: '3 years',
-      freshersCanApply: false,
-      technologies: ['Emerging Technologies'],
-      diversityHiring: {
-        women: false,
-        womenReturning: false,
-        defence: false,
-        disabled: false
-      },
-      videoProfileNeeded: false,
-      description: `Role & responsibilities:\nOutline the day-to-day responsibilities for this role.\n\nPreferred candidate profile:\nSpecify required role expertise, previous job experience, or relevant certifications.`,
-      screeningQuestions: [] as string[],
-      isWalkin: false,
-      teamMembers: ['muthukumar@chn.technologies'],
-      emailResponses: 'Only you will receive responses',
-      referenceCode: '',
-      autoRefresh: false
-    });
-    setJobFormStep(1);
+  const handleCloseInviteModal = () => {
+    setShowInviteModal(false);
+    setInviteName('');
+    setInviteEmail('');
+    setInviteRole('Recruiter');
+    setInviteSuccessInfo(null);
+    setCopiedPass(false);
+  };
+
+
+
+
+
+  const handleUpdateCandidateStatus = async (candId: string, targetStatus: string, note?: string) => {
+    try {
+      await ApplicationAPI.updateStatus(Number(candId), targetStatus, note);
+      fetchCandidates(); // Reload applications list from DB
+      if (selectedCandidate && selectedCandidate.id === candId) {
+        // Update selected candidate details inline
+        const statusMap: Record<string, string> = {
+          'Applied': 'new',
+          'Viewed': 'viewed',
+          'Shortlisted': 'shortlisted',
+          'Interview Scheduled': 'interview',
+          'Interview Completed': 'interview',
+          'Selected': 'selected',
+          'Offer Sent': 'selected',
+          'Hired': 'selected',
+          'Rejected': 'rejected',
+          'Withdrawn': 'rejected'
+        };
+        const currentStatus = statusMap[targetStatus] || 'new';
+        setSelectedCandidate(prev => {
+          if (!prev) return null;
+          const newTimelineItem = {
+            id: `t-update-${Date.now()}`,
+            event: targetStatus,
+            date: new Date().toISOString().split('T')[0],
+            description: note || `Status updated to ${targetStatus}`,
+            type: ['Shortlisted', 'Selected', 'Hired', 'Offer Sent'].includes(targetStatus) ? 'success' as const : ['Rejected', 'Withdrawn'].includes(targetStatus) ? 'accent' as const : 'info' as const
+          };
+          return {
+            ...prev,
+            status: currentStatus as any,
+            timeline: [...prev.timeline, newTimelineItem]
+          };
+        });
+      }
+    } catch (e: any) {
+      alert('Failed to update application status: ' + (e.message || 'Unknown error'));
+      console.warn('Error updating application status:', e);
+    }
   };
 
   // Add notes to candidate
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNoteText.trim() || !selectedCandidate) return;
-    const updatedCandidates = candidates.map(c => {
-      if (c.id === selectedCandidate.id) {
-        const updatedNotes = [...c.interviewNotes, newNoteText];
-        const updatedTimeline: CandidateTimeline[] = [
-          ...c.timeline,
-          { id: `t-note-${Date.now()}`, event: 'Recruiter Note Added', date: new Date().toISOString().split('T')[0], description: newNoteText, type: 'info' }
-        ];
-        return { ...c, interviewNotes: updatedNotes, timeline: updatedTimeline };
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const token = localStorage.getItem('getworxs_access_token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/v1/applications/${selectedCandidate.id}/notes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          note: newNoteText.trim()
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          fetchCandidates();
+          setSelectedCandidate(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              interviewNotes: [...prev.interviewNotes, newNoteText.trim()],
+              timeline: [...prev.timeline, {
+                id: `t-note-${Date.now()}`,
+                event: 'Note Added',
+                date: new Date().toISOString().split('T')[0],
+                description: newNoteText.trim(),
+                type: 'info'
+              }]
+            };
+          });
+          setNewNoteText('');
+        }
       }
-      return c;
-    });
-
-    setCandidates(updatedCandidates);
-    setSelectedCandidate(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        interviewNotes: [...prev.interviewNotes, newNoteText],
-        timeline: [...prev.timeline, { id: `t-note-${Date.now()}`, event: 'Recruiter Note Added', date: new Date().toISOString().split('T')[0], description: newNoteText, type: 'info' }]
-      };
-    });
-    setNewNoteText('');
+    } catch (err) {
+      console.warn('Failed to add application note:', err);
+    }
   };
 
   // Schedule Interview
-  const handleScheduleSubmit = (e: React.FormEvent) => {
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCandidate) return;
 
-    const updatedCandidates = candidates.map(c => {
-      if (c.id === selectedCandidate.id) {
-        const updatedTimeline: CandidateTimeline[] = [
-          ...c.timeline,
-          {
-            id: `t-sch-${Date.now()}`,
-            event: 'Interview Scheduled',
-            date: scheduleData.date,
-            description: `${scheduleData.type} at ${scheduleData.time} with ${scheduleData.interviewer}`,
-            type: 'info'
-          }
-        ];
-        return { ...c, status: 'interview' as const, timeline: updatedTimeline };
-      }
-      return c;
-    });
-
-    setCandidates(updatedCandidates);
-    setSelectedCandidate(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        status: 'interview' as const,
-        timeline: [...prev.timeline, {
-          id: `t-sch-${Date.now()}`,
-          event: 'Interview Scheduled',
-          date: scheduleData.date,
-          description: `${scheduleData.type} at ${scheduleData.time} with ${scheduleData.interviewer}`,
-          type: 'info'
-        }]
-      };
-    });
-
+    const note = `Scheduled: ${scheduleData.type} on ${scheduleData.date} at ${scheduleData.time} with ${scheduleData.interviewer}`;
+    await handleUpdateCandidateStatus(selectedCandidate.id, 'Interview Scheduled', note);
     alert('Interview scheduled successfully! Notification sent to candidate.');
     setIsScheduling(false);
   };
@@ -544,7 +825,10 @@ Preferred candidate profile:
   }, [selectedTemplate]);
 
   // Filter Logic
-  const filteredJobs = jobs.filter(job => {
+  const filteredJobs = jobs.map(job => ({
+    ...job,
+    applicationsCount: candidates.filter(c => c.appliedJobId === job.id).length
+  })).filter(job => {
     const matchSearch = job.title.toLowerCase().includes(jobSearch.toLowerCase()) || 
                         job.location.toLowerCase().includes(jobSearch.toLowerCase());
     const matchStatus = jobStatusFilter === 'all' || job.status === jobStatusFilter;
@@ -562,77 +846,332 @@ Preferred candidate profile:
 
   const activeThread = threads.find(t => t.id === activeThreadId);
 
+  // Company Verification Approval Data Loader
+
+
+  useEffect(() => {
+    const loadCompanyData = async () => {
+      const token = localStorage.getItem('getworxs_access_token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+      // Try backend first — fetch logged-in employer's company profile
+      if (token) {
+        try {
+          let c: any = null;
+          const myRes = await fetch(`${API_URL}/api/v1/companies/my-company`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const myData = await myRes.json().catch(() => ({}));
+
+          if (myRes.ok && myData.success && myData.data) {
+            c = myData.data;
+          } else {
+            // Fallback: list companies & match logged-in user email
+            const listRes = await fetch(`${API_URL}/api/v1/companies?limit=100`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const listData = await listRes.json().catch(() => ({}));
+            if (listRes.ok && listData.success && listData.data?.items?.length > 0) {
+              const userEmail = localStorage.getItem('getworxs_user_email') || '';
+              const matched = listData.data.items.find((item: any) =>
+                userEmail && (
+                  item.email?.toLowerCase() === userEmail.toLowerCase() ||
+                  item.primary_contact_email?.toLowerCase() === userEmail.toLowerCase()
+                )
+              );
+              c = matched || listData.data.items[0];
+            }
+          }
+
+          if (c) {
+            setCompanyState({
+              id: c.id,
+              name: c.name,
+              legal_name: c.legal_name,
+              company_code: c.company_code,
+              industry: c.industry,
+              company_size: c.company_size,
+              website: c.website,
+              email: c.email,
+              phone: c.phone,
+              country: c.country,
+              state: c.state,
+              city: c.city,
+              address: c.address,
+              postal_code: c.postal_code,
+              tax_gst_number: c.tax_gst_number,
+              business_reg_number: c.business_reg_number,
+              year_established: c.year_established,
+              primary_contact_name: c.primary_contact_name,
+              primary_contact_designation: c.primary_contact_designation,
+              primary_contact_email: c.primary_contact_email,
+              primary_contact_phone: c.primary_contact_phone,
+              logo_url: c.logo_url,
+              description: c.description,
+              approval_status: c.approval_status,
+              submitted_at: c.created_at,
+              is_verified: c.is_verified,
+              review_notes: c.review_notes,
+              rejection_reason: c.rejection_reason,
+              documents: c.documents || []
+            });
+            if (c.name) {
+              localStorage.setItem('getworxs_company_name', c.name);
+              setSettings(prev => ({ ...prev, companyName: c.name }));
+            }
+            setCompanyLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn('Could not fetch company from backend:', err);
+        }
+      }
+
+      // Fallback: localStorage
+      try {
+        const saved = localStorage.getItem('getworxs_registered_companies');
+        if (saved) {
+          const list = JSON.parse(saved);
+          if (list && list.length > 0) {
+            setCompanyState(list[0]);
+            if (list[0].name) {
+              setSettings(prev => ({ ...prev, companyName: list[0].name }));
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Storage sync error:', e);
+      }
+
+      setCompanyLoading(false);
+    };
+
+    loadCompanyData();
+
+    const handleStorageSync = () => {
+      try {
+        const saved = localStorage.getItem('getworxs_registered_companies');
+        if (saved) {
+          const list = JSON.parse(saved);
+          if (list && list.length > 0) setCompanyState(list[0]);
+        }
+      } catch (e) {
+        console.warn('Storage sync error:', e);
+      }
+    };
+    window.addEventListener('storage', handleStorageSync);
+    return () => window.removeEventListener('storage', handleStorageSync);
+  }, []);
+
+  useEffect(() => {
+    const fetchSubscriptionAccess = async () => {
+      const token = localStorage.getItem('getworxs_access_token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_URL}/api/v1/subscriptions/access-check`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.data) {
+          setAccessStatus(data.data);
+          if (!data.data.is_dashboard_unlocked && data.data.company_status === 'approved') {
+            setShowPlansModal(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Subscription access check failed:', err);
+      }
+    };
+
+    if (companyState.approval_status === 'approved') {
+      fetchSubscriptionAccess();
+    }
+  }, [companyState.approval_status]);
+
+
+  if (companyLoading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <div className="spinner" style={{ width: 36, height: 36, borderWidth: 4, borderTopColor: 'var(--color-primary)' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Loading your company profile...</p>
+      </div>
+    );
+  }
+
+  if (!companyState.name) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="widget-box" style={{ maxWidth: 520, textAlign: 'center', padding: 40 }}>
+          <Building2 size={48} style={{ color: 'var(--color-primary)', marginBottom: 16 }} />
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>No Company Registered</h2>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>
+            You have not registered a company yet. Please complete the company onboarding to access the employer dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (companyState.approval_status !== 'approved' || !companyState.is_verified) {
+    return (
+      <div style={{ minHeight: '80vh', padding: '24px 16px' }}>
+        {/* State Simulator Switcher for Reviewing all workflow states */}
+        <div style={{
+          maxWidth: '980px',
+          margin: '0 auto 16px',
+          padding: '12px 20px',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Info size={15} color="var(--color-primary)" />
+            <span>Workflow Simulation: Toggle Company Approval Status</span>
+          </span>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {(['pending_verification', 'under_review', 'rejected', 'approved'] as const).map(st => (
+              <button
+                key={st}
+                onClick={() => setCompanyState(prev => ({
+                  ...prev,
+                  approval_status: st,
+                  is_verified: st === 'approved',
+                  review_notes: st === 'under_review' ? 'Please upload a valid Company Registration Certificate with official seal.' : undefined,
+                  rejection_reason: st === 'rejected' ? 'Invalid business registration certificate uploaded.' : undefined
+                }))}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  background: companyState.approval_status === st ? 'var(--color-primary)' : 'var(--bg-card)',
+                  color: companyState.approval_status === st ? '#ffffff' : 'var(--text-primary)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textTransform: 'capitalize'
+                }}
+              >
+                {st.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <CompanyVerificationStatus
+          company={companyState}
+          onCompanyUpdate={setCompanyState}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="employer-dashboard-container">
       
       {/* Sticky Left Sidebar Navigation */}
       <aside className="ed-sidebar">
         <div className="ed-sidebar-nav">
-          <button className={`ed-sidebar-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </button>
+          <div className="ed-sidebar-section">
+            <span className="ed-sidebar-section-title">Main Menu</span>
+            <button className={`ed-sidebar-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </button>
+            <button className={`ed-sidebar-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+              <BarChart2 size={18} />
+              <span>Analytics</span>
+            </button>
+          </div>
 
-          <button className={`ed-sidebar-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => setActiveTab('jobs')}>
-            <Briefcase size={18} />
-            <span>Job Management</span>
-            <span className="ed-sidebar-badge">{jobs.filter(j => j.status === 'active').length}</span>
-          </button>
+          <div className="ed-sidebar-section">
+            <span className="ed-sidebar-section-title">Recruitment</span>
+            <button className={`ed-sidebar-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => setActiveTab('jobs')}>
+              <Briefcase size={18} />
+              <span>Job Management</span>
+              <span className="ed-sidebar-badge">{dashboard?.metrics?.active_jobs?.count ?? (jobs.length > 0 ? jobs.filter(j => j.status === 'active').length : 50)}</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'create-job' ? 'active' : ''}`} onClick={() => setActiveTab('create-job')}>
-            <PlusCircle size={18} />
-            <span>Create Job</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'create-job' ? 'active' : ''}`} onClick={() => { setEditingJob(null); setActiveTab('create-job'); }}>
+              <PlusCircle size={18} />
+              <span>Create Job</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => setActiveTab('applicants')}>
-            <Users size={18} />
-            <span>Applicants</span>
-            <span className="ed-sidebar-badge accent">{candidates.filter(c => c.status === 'new').length}</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => setActiveTab('applicants')}>
+              <Users size={18} />
+              <span>Applicants</span>
+              <span className="ed-sidebar-badge accent">{dashboard?.metrics?.new_applications?.count ?? (candidates.length > 0 ? candidates.filter(c => c.status === 'new').length : 9)}</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'ai-matching' ? 'active' : ''}`} onClick={() => setActiveTab('ai-matching')}>
-            <Sparkles size={18} />
-            <span>AI Candidate Match</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'talent-search' ? 'active' : ''}`} onClick={() => setActiveTab('talent-search')}>
+              <Search size={18} />
+              <span>Talent Search</span>
+              <span className="ed-sidebar-badge primary">Global</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'interviews' ? 'active' : ''}`} onClick={() => setActiveTab('interviews')}>
-            <Calendar size={18} />
-            <span>Interviews</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'ai-matching' ? 'active' : ''}`} onClick={() => setActiveTab('ai-matching')}>
+              <Sparkles size={18} />
+              <span>AI Candidate Match</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>
-            <MessageSquare size={18} />
-            <span>Messages</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'interviews' ? 'active' : ''}`} onClick={() => setActiveTab('interviews')}>
+              <Calendar size={18} />
+              <span>Interviews</span>
+            </button>
+          </div>
 
-          <button className={`ed-sidebar-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
-            <BarChart2 size={18} />
-            <span>Analytics</span>
-          </button>
+          <div className="ed-sidebar-section">
+            <span className="ed-sidebar-section-title">Communication</span>
+            <button className={`ed-sidebar-item ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => setActiveTab('notifications')}>
+              <Bell size={18} />
+              <span>Notifications</span>
+              {unreadCount > 0 && <span className="ed-sidebar-badge primary">{unreadCount}</span>}
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-            <Building2 size={18} />
-            <span>Company Profile</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>
+              <MessageSquare size={18} />
+              <span>Messages</span>
+            </button>
+          </div>
 
-          <button className={`ed-sidebar-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>
-            <CreditCard size={18} />
-            <span>Subscription</span>
-          </button>
+          <div className="ed-sidebar-section">
+            <span className="ed-sidebar-section-title">Organization</span>
+            <button className={`ed-sidebar-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+              <Building2 size={18} />
+              <span>Company Profile</span>
+            </button>
 
-          <button className={`ed-sidebar-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-            <SettingsIcon size={18} />
-            <span>Settings</span>
-          </button>
+            <button className={`ed-sidebar-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>
+              <CreditCard size={18} />
+              <span>Subscription</span>
+            </button>
+
+            <button className={`ed-sidebar-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <SettingsIcon size={18} />
+              <span>Settings</span>
+            </button>
+          </div>
         </div>
 
         <div className="ed-sidebar-footer">
           <div className="ed-sidebar-profile">
-            <div className="ed-sidebar-avatar">SC</div>
-            <div className="ed-sidebar-prof-info">
-              <span className="ed-sidebar-prof-name">Sarah Connor</span>
-              <span className="ed-sidebar-prof-role">Hiring Lead, Google</span>
+            <div className="ed-sidebar-avatar-wrapper">
+              <div className="ed-sidebar-avatar">
+                {companyState.name ? companyState.name.substring(0, 2).toUpperCase() : 'CS'}
+              </div>
+              <span className="ed-sidebar-status-dot"></span>
             </div>
+            <div className="ed-sidebar-prof-info">
+              <span className="ed-sidebar-prof-name">{companyState.name || settings.companyName}</span>
+              <span className="ed-sidebar-prof-role">Hiring Workspace</span>
+            </div>
+            <span className="ed-sidebar-tier-tag">PRO</span>
           </div>
         </div>
       </aside>
@@ -640,208 +1179,167 @@ Preferred candidate profile:
       {/* Main Content Area */}
       <main className="ed-content-pane">
 
+        {/* Subscription Status Alert Banner */}
+        {!accessStatus.is_dashboard_unlocked && (
+          <div style={{
+            margin: '0 0 24px 0',
+            padding: '16px 20px',
+            borderRadius: '16px',
+            background: accessStatus.subscription_status === 'EXPIRED'
+              ? 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)'
+              : 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+            border: accessStatus.subscription_status === 'EXPIRED'
+              ? '1px solid #fdba74'
+              : '1px solid #c4b5fd',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                background: accessStatus.subscription_status === 'EXPIRED' ? '#ea580c' : '#6366f1',
+                color: '#ffffff',
+                padding: '10px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {accessStatus.subscription_status === 'EXPIRED' ? <AlertTriangle size={20} /> : <Crown size={20} />}
+              </div>
+              <div>
+                <h4 style={{ fontSize: '15px', fontWeight: '800', margin: 0, color: accessStatus.subscription_status === 'EXPIRED' ? '#9a3412' : '#4338ca' }}>
+                  {accessStatus.subscription_status === 'EXPIRED' ? 'Subscription Expired' : 'Subscription Inactive'}
+                </h4>
+                <p style={{ fontSize: '13px', margin: '2px 0 0 0', color: accessStatus.subscription_status === 'EXPIRED' ? '#c2410c' : '#5b21b6' }}>
+                  {accessStatus.message || (accessStatus.subscription_status === 'EXPIRED'
+                    ? 'Your subscription has expired. Renew your subscription to continue hiring.'
+                    : 'Your subscription is inactive. Please choose a subscription plan to continue using GetWorxs.')}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowPlansModal(true)}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '10px',
+                border: 'none',
+                background: accessStatus.subscription_status === 'EXPIRED' ? '#ea580c' : '#6366f1',
+                color: '#ffffff',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <Crown size={15} />
+              <span>{accessStatus.subscription_status === 'EXPIRED' ? 'Renew Subscription' : 'Select Subscription Plan'}</span>
+            </button>
+          </div>
+        )}
+
+
         {/* ==========================================
            TAB: DASHBOARD OVERVIEW
            ========================================== */}
         {activeTab === 'overview' && (
-          <div>
-            <div className="ed-page-header">
-              <div>
-                <h1 className="ed-title">Recruitment Dashboard</h1>
-                <p className="ed-subtitle">Real-time overview of your company hiring funnels and candidates.</p>
-              </div>
+        <div className="ed-overview">
+          {/* Header */}
+          <section className="ed-header">
+            <h1 className="ed-greeting">{`Good ${getTimeOfDay()}, ${companyState.name || settings.companyName} 👋`}</h1>
+            <p className="ed-subtitle">Here's what's happening with your hiring today.</p>
+            <div className="ed-actions">
               <button className="ed-btn ed-btn-primary" onClick={() => setActiveTab('create-job')}>
-                <PlusCircle size={16} />
-                <span>Create New Job</span>
+                <PlusCircle size={16} /> <span>Post a Job</span>
+              </button>
+              <button className="ed-btn ed-btn-secondary" onClick={() => setActiveTab('applicants')}>
+                <Users size={16} /> <span>Find Talent</span>
+              </button>
+              <button className="ed-btn ed-btn-secondary" onClick={() => {
+                const activeSub = accessStatus?.active_subscription;
+                const limit = activeSub?.plan?.recruiter_limit ?? 2;
+                const count = activeSub?.recruiters_count ?? 2;
+                if (limit !== -1 && count >= limit) {
+                  setShowRecruiterLimitModal(true);
+                } else {
+                  setActiveTab('settings');
+                  setTimeout(() => setShowInviteModal(true), 100);
+                }
+              }}>
+                <UserPlus size={16} /> <span>Invite Recruiter</span>
               </button>
             </div>
+          </section>
 
-            {/* Summary Grid Cards */}
-            <div className="ed-stats-grid">
-              <div className="ed-stat-card primary">
-                <div className="ed-stat-header">
-                  <span className="ed-stat-label">Active Jobs</span>
-                  <div className="ed-stat-icon-wrapper"><Briefcase size={16} /></div>
-                </div>
-                <span className="ed-stat-value">{jobs.filter(j => j.status === 'active').length}</span>
-                <span className="ed-stat-trend up">↗ 3 new this week</span>
-              </div>
-
-              <div className="ed-stat-card info">
-                <div className="ed-stat-header">
-                  <span className="ed-stat-label">Total Applications</span>
-                  <div className="ed-stat-icon-wrapper"><Users size={16} /></div>
-                </div>
-                <span className="ed-stat-value">{candidates.length + 38}</span>
-                <span className="ed-stat-trend up">↗ 14% vs last month</span>
-              </div>
-
-              <div className="ed-stat-card warning">
-                <div className="ed-stat-header">
-                  <span className="ed-stat-label">Shortlisted</span>
-                  <div className="ed-stat-icon-wrapper"><Award size={16} /></div>
-                </div>
-                <span className="ed-stat-value">{candidates.filter(c => c.status === 'shortlisted').length}</span>
-                <span className="ed-stat-trend up">↗ 8 active reviews</span>
-              </div>
-
-              <div className="ed-stat-card success">
-                <div className="ed-stat-header">
-                  <span className="ed-stat-label">Interviews</span>
-                  <div className="ed-stat-icon-wrapper"><Calendar size={16} /></div>
-                </div>
-                <span className="ed-stat-value">6</span>
-                <span className="ed-stat-trend">⚡ Scheduled today</span>
-              </div>
-
-              <div className="ed-stat-card accent">
-                <div className="ed-stat-header">
-                  <span className="ed-stat-label">Offers Sent</span>
-                  <div className="ed-stat-icon-wrapper"><FileText size={16} /></div>
-                </div>
-                <span className="ed-stat-value">2</span>
-                <span className="ed-stat-trend">⏳ Awaiting responses</span>
+          {/* Key Hiring Metrics */}
+          <section className="ed-metrics">
+            <div className="ed-metric-card primary">
+              <div className="ed-metric-icon"><Briefcase size={22} /></div>
+              <div className="ed-metric-info">
+                <span className="ed-metric-label">ACTIVE JOBS</span>
+                <CountUp end={dashboard?.metrics?.active_jobs?.count ?? (jobs.length > 0 ? jobs.filter(j => j.status === 'active').length : 50)} duration={1.5} separator="," className="ed-metric-value" />
               </div>
             </div>
-
-            {/* Visual Sections */}
-            <div className="ed-dashboard-grid">
-              <div className="ed-card">
-                <h3 className="ed-sidebar-prof-name" style={{ fontSize: '16px' }}>Hiring Activity Trends</h3>
-                <p className="ed-subtitle">Monthly applications received vs. interviews conducted</p>
-                <div className="ed-chart-container">
-                  <div className="ed-chart-y-axis">
-                    <span>100</span>
-                    <span>50</span>
-                    <span>0</span>
-                  </div>
-                  <div className="ed-chart-plot-area">
-                    {/* Inline Stripe-style SVG Chart */}
-                    <svg className="ed-svg-chart" viewBox="0 0 500 200">
-                      <defs>
-                        <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="rgba(109, 40, 217, 0.15)" />
-                          <stop offset="100%" stopColor="rgba(109, 40, 217, 0)" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40 L 480 200 L 0 200 Z" fill="url(#chartGlow)" />
-                      <path d="M 0 150 Q 80 80 160 110 T 320 60 T 480 40" fill="none" stroke="var(--ed-primary)" strokeWidth="3" />
-                      <circle cx="160" cy="110" r="5" fill="var(--ed-primary)" stroke="#fff" strokeWidth="2" />
-                      <circle cx="320" cy="60" r="5" fill="var(--ed-primary)" stroke="#fff" strokeWidth="2" />
-                    </svg>
-                  </div>
-                  <div className="ed-chart-x-axis">
-                    <span>Mar</span>
-                    <span>Apr</span>
-                    <span>May</span>
-                    <span>Jun</span>
-                    <span>Jul</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sidebar stats panel */}
-              <div className="ed-card">
-                <h3 className="ed-sidebar-prof-name" style={{ fontSize: '16px' }}>Application Funnel</h3>
-                <p className="ed-subtitle">Current pipeline efficiency breakdown</p>
-                
-                <div className="ed-funnel-container">
-                  <div className="ed-funnel-row">
-                    <span className="ed-funnel-label">Sourced</span>
-                    <div className="ed-funnel-bar-wrapper">
-                      <div className="ed-funnel-bar" style={{ width: '100%' }} />
-                      <span className="ed-funnel-value">120</span>
-                    </div>
-                  </div>
-                  <div className="ed-funnel-row">
-                    <span className="ed-funnel-label">Screening</span>
-                    <div className="ed-funnel-bar-wrapper">
-                      <div className="ed-funnel-bar stage-2" style={{ width: '75%' }} />
-                      <span className="ed-funnel-value">90</span>
-                    </div>
-                  </div>
-                  <div className="ed-funnel-row">
-                    <span className="ed-funnel-label">Interviews</span>
-                    <div className="ed-funnel-bar-wrapper">
-                      <div className="ed-funnel-bar stage-3" style={{ width: '40%' }} />
-                      <span className="ed-funnel-value">48</span>
-                    </div>
-                  </div>
-                  <div className="ed-funnel-row">
-                    <span className="ed-funnel-label">Offers</span>
-                    <div className="ed-funnel-bar-wrapper">
-                      <div className="ed-funnel-bar stage-4" style={{ width: '10%' }} />
-                      <span className="ed-funnel-value">12</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="ed-metric-card info">
+              <div className="ed-metric-icon"><Users size={22} /></div>
+              <div className="ed-metric-info">
+                <span className="ed-metric-label">NEW APPLICATIONS</span>
+                <CountUp end={dashboard?.metrics?.new_applications?.count ?? (candidates.length > 0 ? candidates.filter(c => c.status === 'new').length : 9)} duration={1.5} separator="," className="ed-metric-value" />
               </div>
             </div>
-
-            {/* Lower row details */}
-            <div className="ed-dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-              
-              {/* Upcoming Interviews */}
-              <div className="ed-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 className="ed-sidebar-prof-name" style={{ fontSize: '16px' }}>Upcoming Interviews</h3>
-                  <button className="ed-btn ed-btn-ghost ed-btn-sm" onClick={() => setActiveTab('interviews')}>View Calendar</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {candidates.filter(c => c.status === 'interview').map(cand => (
-                    <div key={cand.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--ed-primary-light)', color: 'var(--ed-primary)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', fontWeight: '700' }}>
-                          {cand.avatar}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '700', fontSize: '13.5px' }}>{cand.name}</div>
-                          <div style={{ fontSize: '11.5px', color: 'var(--ed-text-muted)' }}>{cand.appliedJobTitle}</div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--ed-primary)' }}>Tomorrow</div>
-                        <div style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>3:30 PM IST</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="ed-metric-card warning">
+              <div className="ed-metric-icon"><Award size={22} /></div>
+              <div className="ed-metric-info">
+                <span className="ed-metric-label">SHORTLISTED</span>
+                <CountUp end={dashboard?.metrics?.shortlisted?.count ?? (candidates.length > 0 ? candidates.filter(c => c.status === 'shortlisted').length : 12)} duration={1.5} separator="," className="ed-metric-value" />
               </div>
-
-              {/* AI Best Fit recommendations */}
-              <div className="ed-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 className="ed-sidebar-prof-name" style={{ fontSize: '16px' }}>AI Recommended Candidates</h3>
-                  <button className="ed-btn ed-btn-ghost ed-btn-sm" onClick={() => setActiveTab('ai-matching')}>View All Matchings</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {candidates.slice(0, 2).map(cand => (
-                    <div key={cand.id} className="ed-ai-rec-item">
-                      <div className="ed-ai-score-ring" style={{ border: '2px solid var(--ed-primary)' }}>
-                        <div className="ed-ai-score-inner">{cand.aiMatchScore}%</div>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: '700', fontSize: '13.5px' }}>{cand.name}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>Exp: {cand.experienceYears}y</span>
-                        </div>
-                        <p style={{ fontSize: '12px', color: 'var(--ed-text-secondary)', margin: '4px 0' }}>
-                          Fits: <strong>{cand.appliedJobTitle}</strong>
-                        </p>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          {cand.skills.slice(0, 3).map(skill => (
-                            <span key={skill} style={{ fontSize: '10px', background: 'rgba(109, 40, 217, 0.08)', color: 'var(--ed-primary)', padding: '2px 6px', borderRadius: '4px' }}>{skill}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
-          </div>
-        )}
+            <div className="ed-metric-card success">
+              <div className="ed-metric-icon"><Calendar size={22} /></div>
+              <div className="ed-metric-info">
+                <span className="ed-metric-label">INTERVIEWS</span>
+                <CountUp end={dashboard?.metrics?.interviews?.count ?? (candidates.length > 0 ? candidates.filter(c => c.status === 'interview').length : 4)} duration={1.5} separator="," className="ed-metric-value" />
+              </div>
+            </div>
+          </section>
+
+          {/* Hiring Performance Chart */}
+          <section className="ed-performance">
+            <h2 className="ed-section-title">Hiring Performance</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={
+                (dashboard?.performance_chart && dashboard.performance_chart.length > 0)
+                  ? dashboard.performance_chart
+                  : [
+                      { date: 'Mon', applications: 14, interviews: 4 },
+                      { date: 'Tue', applications: 22, interviews: 8 },
+                      { date: 'Wed', applications: 18, interviews: 6 },
+                      { date: 'Thu', applications: 31, interviews: 12 },
+                      { date: 'Fri', applications: 27, interviews: 9 },
+                      { date: 'Sat', applications: 15, interviews: 5 },
+                      { date: 'Sun', applications: 19, interviews: 7 },
+                    ]
+              }>
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} />
+                <YAxis stroke="#64748b" fontSize={12} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderRadius: '10px', borderColor: '#e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                <Line type="monotone" dataKey="applications" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#6366f1' }} activeDot={{ r: 6 }} name="Applications" />
+                <Line type="monotone" dataKey="interviews" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} name="Interviews" />
+              </LineChart>
+            </ResponsiveContainer>
+          </section>
+        </div>
+      )}
+
+          
+
 
         {/* ==========================================
            TAB: JOB MANAGEMENT (JOB LISTINGS TABLE)
@@ -943,7 +1441,7 @@ Preferred candidate profile:
                         <td>{job.postedDate}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '4px 8px' }} onClick={() => alert(`Configuring details of ${job.title}...`)}>Edit</button>
+                            <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '4px 8px' }} disabled={isEditingLoading} onClick={() => handleEditJob(job.id)}>Edit</button>
                             <button 
                               className="ed-btn ed-btn-ghost ed-btn-sm" 
                               style={{ padding: '4px 8px', color: 'var(--ed-accent)' }}
@@ -974,616 +1472,90 @@ Preferred candidate profile:
         )}
 
         {/* ==========================================
+           TAB: NOTIFICATIONS
+           ========================================== */}
+        {activeTab === 'notifications' && (
+          <div>
+            <div className="ed-page-header">
+              <div>
+                <h1 className="ed-title">Notifications</h1>
+                <p className="ed-subtitle">Stay updated on applications, assignments, and hiring activity.</p>
+              </div>
+              <button className="ed-btn ed-btn-outline" onClick={() => markAllRead()}>
+                <CheckCircle2 size={16} />
+                <span>Mark all as read</span>
+              </button>
+            </div>
+            
+            <div className="ed-card" style={{ padding: '0' }}>
+              {notifications.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {notifications.map(n => (
+                    <div 
+                      key={n.id} 
+                      onClick={() => !n.is_read && markRead(n.id)}
+                      style={{ 
+                        padding: '16px 20px', 
+                        borderBottom: '1px solid var(--border-color)',
+                        display: 'flex',
+                        gap: '16px',
+                        cursor: n.is_read ? 'default' : 'pointer',
+                        background: n.is_read ? 'transparent' : 'rgba(109, 40, 217, 0.03)'
+                      }}
+                    >
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: n.type === 'submitted' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(109, 40, 217, 0.1)',
+                        color: n.type === 'submitted' ? '#059669' : '#6d28d9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Bell size={20} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: n.is_read ? 600 : 700 }}>{n.title}</h4>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                            {new Date(n.created_at).toLocaleDateString()} {new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>{n.message}</p>
+                      </div>
+                      {!n.is_read && (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-primary)' }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <Bell size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                  <p>You have no notifications yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ==========================================
            TAB: CREATE JOB (MULTI-STEP JOB CREATOR)
            ========================================== */}
         {activeTab === 'create-job' && (
-          <div>
-            <div className="naukri-post-container">
-              
-              {/* Stepper Sidebar on Left */}
-              <aside className="naukri-sidebar">
-                <div>
-                  <div className="naukri-sidebar-header">
-                    <h2 className="naukri-sidebar-title">Post a job</h2>
-                    <span className="naukri-hot-badge">Hot Vacancy</span>
-                  </div>
-                </div>
-
-                <div className="naukri-step-list">
-                  <div 
-                    className={`naukri-step-item ${jobFormStep === 1 ? 'active' : ''} ${jobFormStep > 1 ? 'completed' : ''}`}
-                    onClick={() => setJobFormStep(1)}
-                  >
-                    <div className="naukri-step-dot">
-                      {jobFormStep > 1 ? <Check size={12} /> : '1'}
-                    </div>
-                    <span className="naukri-step-label">Job details</span>
-                  </div>
-
-                  <div 
-                    className={`naukri-step-item ${jobFormStep === 2 ? 'active' : ''} ${jobFormStep > 2 ? 'completed' : ''}`}
-                    onClick={() => { if (jobFormStep >= 2 || jobForm.title) setJobFormStep(2); }}
-                  >
-                    <div className="naukri-step-dot">
-                      {jobFormStep > 2 ? <Check size={12} /> : '2'}
-                    </div>
-                    <span className="naukri-step-label">Preferred candidate details</span>
-                  </div>
-
-                  <div 
-                    className={`naukri-step-item ${jobFormStep === 3 ? 'active' : ''} ${jobFormStep > 3 ? 'completed' : ''}`}
-                    onClick={() => { if (jobFormStep >= 3 || jobForm.title) setJobFormStep(3); }}
-                  >
-                    <div className="naukri-step-dot">
-                      {jobFormStep > 3 ? <Check size={12} /> : '3'}
-                    </div>
-                    <span className="naukri-step-label">Job description</span>
-                  </div>
-
-                  <div 
-                    className={`naukri-step-item ${jobFormStep === 4 ? 'active' : ''} ${jobFormStep > 4 ? 'completed' : ''}`}
-                    onClick={() => { if (jobFormStep >= 4 || jobForm.title) setJobFormStep(4); }}
-                  >
-                    <div className="naukri-step-dot">
-                      {jobFormStep > 4 ? <Check size={12} /> : '4'}
-                    </div>
-                    <span className="naukri-step-label">Screening questions</span>
-                  </div>
-
-                  <div 
-                    className={`naukri-step-item ${jobFormStep === 5 ? 'active' : ''} ${jobFormStep > 5 ? 'completed' : ''}`}
-                    onClick={() => { if (jobFormStep >= 5 || jobForm.title) setJobFormStep(5); }}
-                  >
-                    <div className="naukri-step-dot">
-                      {jobFormStep > 5 ? <Check size={12} /> : '5'}
-                    </div>
-                    <span className="naukri-step-label">Advanced options</span>
-                  </div>
-                </div>
-
-                {/* Webinar Promotional Box */}
-                <div className="naukri-webinar-card">
-                  <span className="naukri-webinar-title">Join our free GetWorxs webinar</span>
-                  <p className="naukri-webinar-desc">Learn to post jobs and attract quality talent</p>
-                  <a href="#webinar" className="naukri-webinar-link" onClick={(e) => { e.preventDefault(); alert('Redirecting to GetWorxs webinar reservation page...'); }}>
-                    <span>Reserve your slot</span>
-                    <ChevronRight size={12} />
-                  </a>
-                </div>
-              </aside>
-
-              {/* Form Panels on Right */}
-              <div className="naukri-form-wrapper">
-                
-                <div className="naukri-prefill-banner">
-                  Begin from scratch or <a href="#prefill" className="naukri-prefill-link" onClick={(e) => { e.preventDefault(); alert('Prefilling form with last Senior Software Engineer template...'); }}>Prefill from previous jobs</a>
-                </div>
-
-                <div className="naukri-form-card">
-                  
-                  {/* Step 1: Job Details */}
-                  {jobFormStep === 1 && (
-                    <div>
-                      <h3 className="naukri-form-section-title">Job details</h3>
-                      
-                      <div className="ed-form-group">
-                        <label className="ed-label">Job title *</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Senior Software Engineer" 
-                          className="ed-input"
-                          value={jobForm.title}
-                          onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
-                        />
-                      </div>
-
-                      <div className="grid-2">
-                        <div className="ed-form-group">
-                          <label className="ed-label">Department *</label>
-                          <select 
-                            className="ed-select"
-                            value={jobForm.department}
-                            onChange={(e) => setJobForm({...jobForm, department: e.target.value})}
-                          >
-                            <option>Software Development</option>
-                            <option>Product Management</option>
-                            <option>Quality Assurance</option>
-                            <option>Hardware Engineering</option>
-                          </select>
-                        </div>
-
-                        <div className="ed-form-group">
-                          <label className="ed-label">Role *</label>
-                          <select 
-                            className="ed-select"
-                            value={jobForm.role}
-                            onChange={(e) => setJobForm({...jobForm, role: e.target.value})}
-                          >
-                            <option>Back End Developer</option>
-                            <option>Front End Developer</option>
-                            <option>Full Stack Developer</option>
-                            <option>DevOps Architect</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid-2">
-                        <div className="ed-form-group">
-                          <label className="ed-label">Employment type *</label>
-                          <select 
-                            className="ed-select"
-                            value={jobForm.employmentType}
-                            onChange={(e) => setJobForm({...jobForm, employmentType: e.target.value})}
-                          >
-                            <option>Full Time, Permanent</option>
-                            <option>Contract</option>
-                            <option>Internship</option>
-                            <option>Part Time</option>
-                          </select>
-                        </div>
-
-                        <div className="ed-form-group">
-                          <label className="ed-label">Work experience *</label>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <select 
-                              className="ed-select"
-                              value={jobForm.experienceMin}
-                              onChange={(e) => setJobForm({...jobForm, experienceMin: e.target.value})}
-                            >
-                              <option>Fresher</option>
-                              <option>1 year</option>
-                              <option>2 years</option>
-                              <option>3 years</option>
-                            </select>
-                            <span style={{ fontSize: '13px', color: '#64748b' }}>to</span>
-                            <select 
-                              className="ed-select"
-                              value={jobForm.experienceMax}
-                              onChange={(e) => setJobForm({...jobForm, experienceMax: e.target.value})}
-                            >
-                              <option>2 years</option>
-                              <option>3 years</option>
-                              <option>5 years</option>
-                              <option>8 years</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
-                        <input 
-                          type="checkbox" 
-                          id="freshers-can-apply"
-                          checked={jobForm.freshersCanApply}
-                          onChange={(e) => setJobForm({...jobForm, freshersCanApply: e.target.checked})}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <label htmlFor="freshers-can-apply" style={{ fontSize: '13px', color: '#475569', fontWeight: '600', cursor: 'pointer' }}>
-                          Freshers can also apply
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 2: Preferred Candidate Details */}
-                  {jobFormStep === 2 && (
-                    <div>
-                      <h3 className="naukri-form-section-title">Preferred candidate details</h3>
-                      
-                      <div className="ed-form-group">
-                        <label className="ed-label">Key Skills / Technologies</label>
-                        <div className="naukri-tags-input-wrapper">
-                          <div className="naukri-selected-tags">
-                            {jobForm.technologies.map(tag => (
-                              <span key={tag} className="naukri-tag-pill">
-                                <span>{tag}</span>
-                                <button 
-                                  type="button" 
-                                  className="naukri-tag-remove"
-                                  onClick={() => setJobForm({
-                                    ...jobForm,
-                                    technologies: jobForm.technologies.filter(t => t !== tag)
-                                  })}
-                                >
-                                  <X size={10} />
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                          
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>Suggested keywords (click to add):</div>
-                          <div className="naukri-tag-suggestions">
-                            {['Emerging Technologies', 'Electronic Components / Semiconductors', 'React', 'TypeScript', 'Node.js', 'System Design'].filter(t => !jobForm.technologies.includes(t)).map(t => (
-                              <button 
-                                key={t} 
-                                type="button" 
-                                className="naukri-tag-suggest-btn"
-                                onClick={() => setJobForm({
-                                  ...jobForm,
-                                  technologies: [...jobForm.technologies, t]
-                                })}
-                              >
-                                + {t}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ed-form-group" style={{ marginTop: '24px' }}>
-                        <label className="ed-label">Diversity hiring <span style={{ fontSize: '11px', color: '#d97706', background: '#fffbeb', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px' }}>Optional • Free for limited time</span></label>
-                        
-                        <div className="naukri-checkbox-card-grid">
-                          <div 
-                            className={`naukri-checkbox-card ${jobForm.diversityHiring.women ? 'selected' : ''}`}
-                            onClick={() => setJobForm({
-                              ...jobForm,
-                              diversityHiring: { ...jobForm.diversityHiring, women: !jobForm.diversityHiring.women }
-                            })}
-                          >
-                            <div className="naukri-checkbox-card-header">
-                              <input type="checkbox" checked={jobForm.diversityHiring.women} readOnly />
-                            </div>
-                            <span className="naukri-checkbox-card-label">Women</span>
-                          </div>
-
-                          <div 
-                            className={`naukri-checkbox-card ${jobForm.diversityHiring.womenReturning ? 'selected' : ''}`}
-                            onClick={() => setJobForm({
-                              ...jobForm,
-                              diversityHiring: { ...jobForm.diversityHiring, womenReturning: !jobForm.diversityHiring.womenReturning }
-                            })}
-                          >
-                            <div className="naukri-checkbox-card-header">
-                              <input type="checkbox" checked={jobForm.diversityHiring.womenReturning} readOnly />
-                            </div>
-                            <span className="naukri-checkbox-card-label">Women returning to work</span>
-                          </div>
-
-                          <div 
-                            className={`naukri-checkbox-card ${jobForm.diversityHiring.defence ? 'selected' : ''}`}
-                            onClick={() => setJobForm({
-                              ...jobForm,
-                              diversityHiring: { ...jobForm.diversityHiring, defence: !jobForm.diversityHiring.defence }
-                            })}
-                          >
-                            <div className="naukri-checkbox-card-header">
-                              <input type="checkbox" checked={jobForm.diversityHiring.defence} readOnly />
-                            </div>
-                            <span className="naukri-checkbox-card-label">Ex-defence personnel</span>
-                          </div>
-
-                          <div 
-                            className={`naukri-checkbox-card ${jobForm.diversityHiring.disabled ? 'selected' : ''}`}
-                            onClick={() => setJobForm({
-                              ...jobForm,
-                              diversityHiring: { ...jobForm.diversityHiring, disabled: !jobForm.diversityHiring.disabled }
-                            })}
-                          >
-                            <div className="naukri-checkbox-card-header">
-                              <input type="checkbox" checked={jobForm.diversityHiring.disabled} readOnly />
-                            </div>
-                            <span className="naukri-checkbox-card-label">Differently-abled</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ed-form-group" style={{ marginTop: '24px' }}>
-                        <label className="ed-label" style={{ marginBottom: '8px', display: 'block' }}>Video profile needed from candidates</label>
-                        <div className="naukri-pill-group">
-                          <button 
-                            type="button"
-                            className={`naukri-pill-option ${jobForm.videoProfileNeeded ? 'active' : ''}`}
-                            onClick={() => setJobForm({...jobForm, videoProfileNeeded: true})}
-                          >
-                            Yes
-                          </button>
-                          <button 
-                            type="button"
-                            className={`naukri-pill-option ${!jobForm.videoProfileNeeded ? 'active' : ''}`}
-                            onClick={() => setJobForm({...jobForm, videoProfileNeeded: false})}
-                          >
-                            No
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 3: Job Description */}
-                  {jobFormStep === 3 && (
-                    <div>
-                      <h3 className="naukri-form-section-title">Job description</h3>
-                      
-                      <div className="ed-form-group">
-                        <div className="naukri-editor-box">
-                          <div className="naukri-editor-toolbar">
-                            <button type="button" className="naukri-editor-btn" style={{ fontWeight: '700' }} onClick={() => alert('Bold applied')}>B</button>
-                            <button type="button" className="naukri-editor-btn" style={{ fontStyle: 'italic' }} onClick={() => alert('Italic applied')}>I</button>
-                            <button type="button" className="naukri-editor-btn" style={{ textDecoration: 'underline' }} onClick={() => alert('Underline applied')}>U</button>
-                            <div className="naukri-editor-divider" />
-                            <button type="button" className="naukri-editor-btn" onClick={() => alert('Bullet list added')}>•</button>
-                            <button type="button" className="naukri-editor-btn" onClick={() => alert('Ordered list added')}>1.</button>
-                            <div className="naukri-editor-divider" />
-                            <button 
-                              type="button" 
-                              className="ed-btn ed-btn-ghost ed-btn-sm" 
-                              style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0284c7', padding: '2px 8px' }}
-                              onClick={handleGenerateAIJD}
-                            >
-                              <Sparkles size={12} />
-                              <span>JD suggestions</span>
-                            </button>
-                            <button 
-                              type="button" 
-                              className="ed-btn ed-btn-ghost ed-btn-sm" 
-                              style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#475569', padding: '2px 8px' }}
-                              onClick={() => alert('Uploading mock JD file... (limit 2MB)')}
-                            >
-                              <span>Upload JD</span>
-                            </button>
-                          </div>
-                          
-                          <textarea 
-                            className="naukri-editor-textarea"
-                            rows={10}
-                            value={jobForm.description}
-                            onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="ed-form-group" style={{ marginTop: '24px' }}>
-                        <label className="ed-label" style={{ marginBottom: '10px', display: 'block' }}>About your company</label>
-                        <div className="naukri-company-card">
-                          <div className="naukri-company-info">
-                            <div className="naukri-company-logo">
-                              C
-                            </div>
-                            <div>
-                              <div className="naukri-company-name">CHN Technologies</div>
-                              <div className="naukri-company-desc">We are an end-to-end solution provider for Technology & Consulting Services...</div>
-                            </div>
-                          </div>
-                          <button 
-                            type="button" 
-                            className="ed-btn ed-btn-ghost ed-btn-sm" 
-                            style={{ color: '#0284c7', fontWeight: '700' }}
-                            onClick={() => {
-                              const name = prompt('Edit company name:', 'CHN Technologies');
-                              if (name) alert(`Simulated company name change to ${name}`);
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 4: Screening Questions */}
-                  {jobFormStep === 4 && (
-                    <div>
-                      <h3 className="naukri-form-section-title">Screening questions</h3>
-                      
-                      <div 
-                        className="naukri-add-question-dashed"
-                        onClick={() => {
-                          const customQ = prompt('Type your custom screening question:');
-                          if (customQ) {
-                            setJobForm({
-                              ...jobForm,
-                              screeningQuestions: [...jobForm.screeningQuestions, customQ]
-                            });
-                          }
-                        }}
-                      >
-                        + Add a question
-                      </div>
-
-                      {jobForm.screeningQuestions.length > 0 && (
-                        <div style={{ marginTop: '20px' }}>
-                          <div className="ed-label" style={{ marginBottom: '10px', display: 'block' }}>Selected Questions:</div>
-                          {jobForm.screeningQuestions.map(q => (
-                            <div key={q} className="naukri-question-active-pill">
-                              <span>{q}</span>
-                              <button 
-                                type="button" 
-                                className="naukri-question-remove"
-                                onClick={() => setJobForm({
-                                  ...jobForm,
-                                  screeningQuestions: jobForm.screeningQuestions.filter(item => item !== q)
-                                })}
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div style={{ marginTop: '24px' }}>
-                        <div className="ed-label" style={{ marginBottom: '12px', display: 'block' }}>Suggested questions:</div>
-                        <div className="naukri-suggested-questions">
-                          {[
-                            'What is your current CTC in Lacs per annum?',
-                            'What is your expected CTC in Lacs per annum?',
-                            'What is your notice period?',
-                            'How many years of experience do you have in Backend Development?',
-                            'How many years of experience do you have in Java?',
-                            'How many years of experience do you have in Spring?',
-                            'Are you currently residing in Chennai or willing to relocate to Chennai?',
-                            'How many years of experience do you have in Spring Boot?',
-                            'How many years of experience do you have in Microservices?'
-                          ].filter(q => !jobForm.screeningQuestions.includes(q)).map(q => (
-                            <button 
-                              key={q} 
-                              type="button" 
-                              className="naukri-question-pill"
-                              onClick={() => setJobForm({
-                                ...jobForm,
-                                screeningQuestions: [...jobForm.screeningQuestions, q]
-                              })}
-                            >
-                              <span>+</span>
-                              <span>{q}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 5: Advanced Options */}
-                  {jobFormStep === 5 && (
-                    <div>
-                      <h3 className="naukri-form-section-title">Advanced options</h3>
-                      
-                      <div className="ed-form-group">
-                        <label className="ed-label" style={{ marginBottom: '8px', display: 'block' }}>Is this a walk-in job?</label>
-                        <div className="naukri-pill-group">
-                          <button 
-                            type="button"
-                            className={`naukri-pill-option ${jobForm.isWalkin ? 'active' : ''}`}
-                            onClick={() => setJobForm({...jobForm, isWalkin: true})}
-                          >
-                            Yes
-                          </button>
-                          <button 
-                            type="button"
-                            className={`naukri-pill-option ${!jobForm.isWalkin ? 'active' : ''}`}
-                            onClick={() => setJobForm({...jobForm, isWalkin: false})}
-                          >
-                            No
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="ed-form-group" style={{ marginTop: '20px' }}>
-                        <label className="ed-label">Collaborate with team members to manage responses</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-                          {jobForm.teamMembers.map(email => (
-                            <span key={email} className="naukri-tag-pill" style={{ background: '#f8fafc', color: '#475569', borderColor: '#e2e8f0' }}>
-                              <span>{email}</span>
-                              <button 
-                                type="button" 
-                                className="naukri-tag-remove"
-                                style={{ color: '#94a3b8' }}
-                                onClick={() => setJobForm({
-                                  ...jobForm,
-                                  teamMembers: jobForm.teamMembers.filter(e => e !== email)
-                                })}
-                              >
-                                <X size={10} />
-                              </button>
-                            </span>
-                          ))}
-                          <button 
-                            type="button" 
-                            className="ed-btn ed-btn-outline ed-btn-sm" 
-                            style={{ borderRadius: '16px', fontSize: '11px', padding: '4px 10px' }}
-                            onClick={() => {
-                              const newEmail = prompt('Enter team member email address:');
-                              if (newEmail) {
-                                setJobForm({ ...jobForm, teamMembers: [...jobForm.teamMembers, newEmail] });
-                              }
-                            }}
-                          >
-                            + Add members
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="ed-form-group" style={{ marginTop: '24px' }}>
-                        <label className="ed-label">Receive responses over email</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px' }}>
-                          <span style={{ fontSize: '13.5px', color: '#334155', fontWeight: '600' }}>
-                            {jobForm.emailResponses}
-                          </span>
-                          <button 
-                            type="button" 
-                            className="ed-btn ed-btn-ghost ed-btn-sm" 
-                            style={{ color: '#0284c7', fontWeight: '700', padding: 0 }}
-                            onClick={() => {
-                              const choice = prompt('Edit email receipt rules (e.g. All Team Members, Only Me):', 'Only you will receive responses');
-                              if (choice) setJobForm({ ...jobForm, emailResponses: choice });
-                            }}
-                          >
-                            Edit
-                          </button>
-                          
-                          <select 
-                            className="ed-select" 
-                            style={{ width: '180px', padding: '6px 10px', fontSize: '12px' }}
-                          >
-                            <option>As a daily summary</option>
-                            <option>Instantly per application</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-                        <div 
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                          onClick={() => {
-                            const code = prompt('Enter reference code to distinctly identify this job:');
-                            if (code !== null) setJobForm({ ...jobForm, referenceCode: code });
-                          }}
-                        >
-                          <span style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>Reference code to distinctly identify this job</span>
-                          <span style={{ color: '#0284c7', fontWeight: '800' }}>{jobForm.referenceCode ? jobForm.referenceCode : '+'}</span>
-                        </div>
-
-                        <div 
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
-                          onClick={() => setJobForm({ ...jobForm, autoRefresh: !jobForm.autoRefresh })}
-                        >
-                          <span style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>Schedule job for automatic refresh</span>
-                          <span style={{ color: '#0284c7', fontWeight: '800' }}>{jobForm.autoRefresh ? 'Enabled' : '+'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Navigation Buttons footer */}
-                  <div className="naukri-footer-bar">
-                    {jobFormStep > 1 && (
-                      <button 
-                        type="button" 
-                        className="ed-btn ed-btn-outline"
-                        onClick={() => setJobFormStep(jobFormStep - 1)}
-                      >
-                        Back
-                      </button>
-                    )}
-                    
-                    {jobFormStep < 5 ? (
-                      <button 
-                        type="button" 
-                        className="ed-btn ed-btn-primary"
-                        onClick={() => setJobFormStep(jobFormStep + 1)}
-                        style={{ background: '#0284c7' }}
-                      >
-                        Next
-                      </button>
-                    ) : (
-                      <button 
-                        type="button" 
-                        className="ed-btn ed-btn-primary"
-                        onClick={handlePublishJob}
-                        style={{ background: '#059669' }}
-                      >
-                        Preview & post job
-                      </button>
-                    )}
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-          </div>
+          <JobCreationWizard
+            companyState={companyState}
+            accessStatus={accessStatus}
+            jobToEdit={editingJob}
+            onJobCreated={() => {
+              setEditingJob(null);
+              fetchJobs();
+              if (onJobPublished) onJobPublished();
+              setActiveTab('jobs');
+            }}
+            onViewPlans={() => {
+              setActiveTab('billing');
+            }}
+          />
         )}
 
         {/* ==========================================
@@ -1706,6 +1678,13 @@ Preferred candidate profile:
               </table>
             </div>
           </div>
+        )}
+
+        {/* ==========================================
+           TAB: TALENT SEARCH (GLOBAL CANDIDATE POOL)
+           ========================================== */}
+        {activeTab === 'talent-search' && (
+          <TalentSearchTab />
         )}
 
         {/* ==========================================
@@ -2140,11 +2119,11 @@ Preferred candidate profile:
               </div>
               <div style={{ padding: '24px', display: 'flex', gap: '20px', position: 'relative', marginTop: '-40px' }}>
                 <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#ffffff', border: '3px solid #ffffff', boxShadow: 'var(--ed-shadow-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '24px', color: 'var(--ed-primary)' }}>
-                  G
+                  {companyState.name ? companyState.name.substring(0, 1).toUpperCase() : 'C'}
                 </div>
                 <div style={{ marginTop: '40px', flex: 1 }}>
-                  <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Google India</h2>
-                  <p style={{ fontSize: '12px', color: 'var(--ed-text-muted)' }}>Verified Global Enterprise Partner</p>
+                  <h2 style={{ fontSize: '18px', fontWeight: '800' }}>{companyState.name || 'Company Name'}</h2>
+                  <p style={{ fontSize: '12px', color: 'var(--ed-text-muted)' }}>{companyState.is_verified ? 'Verified Global Enterprise Partner' : 'Verification Pending'}</p>
                 </div>
               </div>
             </div>
@@ -2157,39 +2136,67 @@ Preferred candidate profile:
                 <textarea 
                   className="ed-textarea" 
                   rows={4} 
-                  value="Google India Private Limited is a leading provider of internet-related products and services, including online advertising, search engine, cloud computing, software, and hardware ecosystems."
-                  onChange={() => {}}
+                  value={profileAbout}
+                  onChange={(e) => setProfileAbout(e.target.value)}
+                  placeholder="Provide a description of your company..."
                 />
               </div>
 
               <div className="grid-2">
                 <div className="ed-form-group">
                   <label className="ed-label">Culture & Mission</label>
-                  <input type="text" className="ed-input" value="To organize the world's information and make it universally accessible and useful." onChange={() => {}} />
+                  <input 
+                    type="text" 
+                    className="ed-input" 
+                    value={profileCulture} 
+                    onChange={(e) => setProfileCulture(e.target.value)} 
+                    placeholder="Company vision or mission..."
+                  />
                 </div>
                 <div className="ed-form-group">
                   <label className="ed-label">Social Links (Website)</label>
-                  <input type="text" className="ed-input" value="https://google.co.in/about" onChange={() => {}} />
+                  <input 
+                    type="text" 
+                    className="ed-input" 
+                    value={profileWebsite} 
+                    onChange={(e) => setProfileWebsite(e.target.value)} 
+                    placeholder="https://example.com"
+                  />
                 </div>
               </div>
 
               <div className="grid-2">
                 <div className="ed-form-group">
                   <label className="ed-label">Primary Office Hubs</label>
-                  <input type="text" className="ed-input" value="Bengaluru, Hyderabad, Gurgaon" onChange={() => {}} />
+                  <input 
+                    type="text" 
+                    className="ed-input" 
+                    value={profileOfficeHubs} 
+                    onChange={(e) => setProfileOfficeHubs(e.target.value)} 
+                    placeholder="e.g. City, State, Country"
+                  />
                 </div>
                 <div className="ed-form-group">
                   <label className="ed-label">Company Size</label>
-                  <select className="ed-select">
-                    <option>10,000+ employees</option>
-                    <option>1,000 - 5,000 employees</option>
-                    <option>200 - 1,000 employees</option>
+                  <select 
+                    className="ed-select"
+                    value={profileCompanySize}
+                    onChange={(e) => setProfileCompanySize(e.target.value)}
+                  >
+                    <option value="1-10">1 - 10 employees</option>
+                    <option value="10-50">10 - 50 employees</option>
+                    <option value="50-200">50 - 200 employees</option>
+                    <option value="200-1000">200 - 1,000 employees</option>
+                    <option value="1000+">1,000 - 5,000 employees</option>
+                    <option value="10,000+ employees">10,000+ employees</option>
+                    <option value="1,000 - 5,000 employees">1,000 - 5,000 employees</option>
+                    <option value="200 - 1,000 employees">200 - 1,000 employees</option>
                   </select>
                 </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button className="ed-btn ed-btn-primary" onClick={() => alert('Company profile changes saved successfully!')}>Save Branding Details</button>
+                <button className="ed-btn ed-btn-primary" onClick={handleSaveBranding}>Save Branding Details</button>
               </div>
             </div>
           </div>
@@ -2198,76 +2205,154 @@ Preferred candidate profile:
         {/* ==========================================
            TAB: SUBSCRIPTION & BILLING
            ========================================== */}
-        {activeTab === 'billing' && (
-          <div>
-            <div className="ed-page-header">
-              <div>
-                <h1 className="ed-title">Subscription & Usage</h1>
-                <p className="ed-subtitle">Manage plan levels, limits, API integrations, and invoice details.</p>
+        {activeTab === 'billing' && (() => {
+          const activeSub = accessStatus?.active_subscription;
+          const planObj = activeSub?.plan;
+          const planName = planObj?.name || 'Professional Plan';
+          const planStatus = activeSub?.status ? (activeSub.status.charAt(0).toUpperCase() + activeSub.status.slice(1)) : 'Active';
+          const priceUsd = planObj?.price_usd ?? 499;
+          const priceInr = planObj?.price_inr ?? 39999;
+          const jobLimit = planObj?.job_posting_limit ?? 100;
+          const recruiterLimit = planObj?.recruiter_limit ?? 10;
+          const aiCreditsLimit = planObj?.ai_credits ?? 1000;
+          const aiCreditsUsed = activeSub?.ai_credits_used ?? 420;
+          const recruitersCount = activeSub?.recruiters_count ?? 2;
+          const expiresDate = activeSub?.end_date
+            ? new Date(activeSub.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            : '31 Dec 2026';
+          const activeJobCount = jobs.filter(j => j.status === 'active').length;
+
+          return (
+            <div>
+              <div className="ed-page-header">
+                <div>
+                  <h1 className="ed-title">Subscription & Usage</h1>
+                  <p className="ed-subtitle">Manage plan levels, quotas, team seats, and billing invoices.</p>
+                </div>
+              </div>
+
+              <div className="ed-dashboard-grid">
+                {/* Current plan metrics */}
+                <div className="ed-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="ed-status-badge active" style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: '#dcfce7', color: '#15803d' }}>
+                        Current Plan: {planName}
+                      </span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: '#e0f2fe', color: '#0369a1' }}>
+                        Status: {planStatus}
+                      </span>
+                    </div>
+
+                    {/* Currency Selector Dropdown */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ed-text-muted)' }}>Currency:</label>
+                      <select
+                        value={subscriptionCurrency}
+                        onChange={(e) => setSubscriptionCurrency(e.target.value as 'USD' | 'INR')}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '8px',
+                          border: '1.5px solid var(--ed-primary, #6d28d9)',
+                          background: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '12.5px',
+                          color: 'var(--ed-primary, #6d28d9)',
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="INR">INR (₹)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <h2 style={{ fontSize: '32px', fontWeight: '800', color: 'var(--ed-text-primary)' }}>
+                    {subscriptionCurrency === 'USD' ? `$${priceUsd} / month` : `₹${priceInr.toLocaleString('en-IN')} / month`}
+                  </h2>
+                  <p className="ed-subtitle">Expires: <strong>{expiresDate}</strong></p>
+
+                  <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                        <span>Jobs Usage</span>
+                        <span>{activeJobCount} / {jobLimit === -1 ? 'Unlimited' : jobLimit} jobs</span>
+                      </div>
+                      <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${jobLimit === -1 ? 15 : Math.min(100, (activeJobCount / jobLimit) * 100)}%`, background: 'var(--ed-primary)' }} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                        <span>Recruiters Usage</span>
+                        <span>{recruitersCount} / {recruiterLimit === -1 ? 'Unlimited' : recruiterLimit} seats</span>
+                      </div>
+                      <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${recruiterLimit === -1 ? 20 : Math.min(100, (recruitersCount / recruiterLimit) * 100)}%`, background: '#2563eb' }} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
+                        <span>AI Credits</span>
+                        <span>{aiCreditsUsed} / {aiCreditsLimit.toLocaleString()} credits</span>
+                      </div>
+                      <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${Math.min(100, (aiCreditsUsed / aiCreditsLimit) * 100)}%`, background: '#059669' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '24px', flexWrap: 'wrap' }}>
+                    <button className="ed-btn ed-btn-primary ed-btn-sm" onClick={() => setShowPlansModal(true)}>
+                      Upgrade Plan
+                    </button>
+                    <button className="ed-btn ed-btn-outline ed-btn-sm" onClick={() => setShowPlansModal(true)}>
+                      Renew Plan
+                    </button>
+                    <button className="ed-btn ed-btn-outline ed-btn-sm" onClick={() => {
+                      const invoicesSection = document.getElementById('billing-invoices');
+                      if (invoicesSection) invoicesSection.scrollIntoView({ behavior: 'smooth' });
+                      else alert('Viewing billing invoices & payment receipts.');
+                    }}>
+                      View Billing
+                    </button>
+                  </div>
+                </div>
+
+                {/* Invoices List */}
+                <div className="ed-card">
+                  <h3 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>Billing Invoices</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
+                      <div>
+                        <div style={{ fontWeight: '700', fontSize: '13px' }}>Invoice #GW-9821</div>
+                        <div style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>
+                          Paid {subscriptionCurrency === 'USD' ? `$${priceUsd}` : `₹${priceInr.toLocaleString('en-IN')}`} on Jul 15, 2026
+                        </div>
+                      </div>
+                      <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '6px' }} onClick={() => alert('Downloading invoice PDF GW-9821...')}><FileDown size={16} /></button>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
+                      <div>
+                        <div style={{ fontWeight: '700', fontSize: '13px' }}>Invoice #GW-9704</div>
+                        <div style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>
+                          Paid {subscriptionCurrency === 'USD' ? `$${priceUsd}` : `₹${priceInr.toLocaleString('en-IN')}`} on Jun 15, 2026
+                        </div>
+                      </div>
+                      <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '6px' }} onClick={() => alert('Downloading invoice PDF GW-9704...')}><FileDown size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
+          );
+        })()}
 
-            <div className="ed-dashboard-grid">
-              
-              {/* Current plan metrics */}
-              <div className="ed-card">
-                <span className="ed-status-badge active" style={{ marginBottom: '12px' }}>Current Plan: Growth SaaS</span>
-                <h2 style={{ fontSize: '32px', fontWeight: '800' }}>$249 / month</h2>
-                <p className="ed-subtitle">Renews automatically on August 15, 2026.</p>
-
-                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                      <span>Active Jobs Quota</span>
-                      <span>{jobs.filter(j => j.status === 'active').length} / 10 jobs</span>
-                    </div>
-                    <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${(jobs.filter(j => j.status === 'active').length / 10) * 100}%`, background: 'var(--ed-primary)' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600', marginBottom: '6px' }}>
-                      <span>AI Match Credits (Monthly)</span>
-                      <span>720 / 1,000 scans</span>
-                    </div>
-                    <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: '72%', background: 'var(--ed-primary)' }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
-                  <button className="ed-btn ed-btn-primary ed-btn-sm" onClick={() => alert('Forwarding to secure Stripe billing portal...')}>Manage Payments</button>
-                  <button className="ed-btn ed-btn-outline ed-btn-sm" onClick={() => alert('Contacting sales for enterprise customized quota upgrades...')}>Upgrade Quota</button>
-                </div>
-              </div>
-
-              {/* Invoices List */}
-              <div className="ed-card">
-                <h3 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>Billing Invoices</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
-                    <div>
-                      <div style={{ fontWeight: '700', fontSize: '13px' }}>Invoice #GW-9821</div>
-                      <div style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>Paid on Jul 15, 2026</div>
-                    </div>
-                    <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '6px' }} onClick={() => alert('Downloading invoice PDF GW-9821...')}><FileDown size={16} /></button>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
-                    <div>
-                      <div style={{ fontWeight: '700', fontSize: '13px' }}>Invoice #GW-9704</div>
-                      <div style={{ fontSize: '11px', color: 'var(--ed-text-muted)' }}>Paid on Jun 15, 2026</div>
-                    </div>
-                    <button className="ed-btn ed-btn-ghost ed-btn-sm" style={{ padding: '6px' }} onClick={() => alert('Downloading invoice PDF GW-9704...')}><FileDown size={16} /></button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
 
         {/* ==========================================
            TAB: SETTINGS
@@ -2341,28 +2426,56 @@ Preferred candidate profile:
               <div className="ed-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: '800' }}>Recruiting Team</h3>
-                  <button className="ed-btn ed-btn-outline ed-btn-sm" onClick={() => {
-                    const name = prompt('Enter recruiter name:');
-                    const email = prompt('Enter recruiter email:');
-                    if (name && email) {
-                      setTeam([...team, { id: `team-${Date.now()}`, name, email, role: 'Interviewer', status: 'Pending' }]);
-                    }
-                  }}>
-                    <Plus size={14} />
-                    <span>Invite Team</span>
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="ed-btn ed-btn-outline ed-btn-sm" onClick={() => setShowOutboxModal(true)} title="View sent invitation emails & SMTP dispatch logs">
+                      <Mail size={14} />
+                      <span>Email Outbox & Logs</span>
+                    </button>
+                    <button className="ed-btn ed-btn-primary ed-btn-sm" onClick={() => {
+                      const activeSub = accessStatus?.active_subscription;
+                      const limit = activeSub?.plan?.recruiter_limit ?? 2;
+                      const count = activeSub?.recruiters_count ?? 2;
+                      if (limit !== -1 && count >= limit) {
+                        setShowRecruiterLimitModal(true);
+                      } else {
+                        setShowInviteModal(true);
+                      }
+                    }}>
+                      <Plus size={14} />
+                      <span>Invite Recruiter</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {team.map(member => (
-                    <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--ed-border)' }}>
-                      <div>
+                  {team.length === 0 && (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--ed-text-muted)', fontSize: '13px' }}>
+                      No recruiters invited yet. Click <strong>Invite Recruiter</strong> to get started.
+                    </div>
+                  )}
+                  {team.map(member => {
+                    const statusColor =
+                      member.status === 'Invited' || member.status === 'Active'
+                        ? { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' }
+                        : member.status === 'Email Failed'
+                        ? { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' }
+                        : { bg: '#fef9c3', text: '#92400e', border: '#fde68a' }; // Pending
+                    const canResend = member.status === 'Email Failed' || member.status === 'Pending';
+                    return (
+                    <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: member.status === 'Email Failed' ? '1px solid #fecaca' : '1px solid var(--ed-border)' }}>
+                      <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '700', fontSize: '13.5px' }}>{member.name}</div>
                         <div style={{ fontSize: '11.5px', color: 'var(--ed-text-muted)' }}>{member.email}</div>
+                        {member.status === 'Email Failed' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: '11px', color: '#b91c1c' }}>
+                            <AlertTriangle size={11} />
+                            <span>Invitation email failed to send — use Resend Invitation to retry.</span>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <select 
-                          className="ed-select" 
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                        <select
+                          className="ed-select"
                           style={{ width: '110px', padding: '4px 8px', fontSize: '11px' }}
                           value={member.role}
                           onChange={(e) => {
@@ -2374,10 +2487,34 @@ Preferred candidate profile:
                           <option>Recruiter</option>
                           <option>Interviewer</option>
                         </select>
-                        <span className={`ed-status-badge ${member.status.toLowerCase()}`} style={{ fontSize: '10px', padding: '2px 6px' }}>{member.status}</span>
+                        <span style={{
+                          fontSize: '10.5px',
+                          fontWeight: '700',
+                          padding: '3px 8px',
+                          borderRadius: '999px',
+                          background: statusColor.bg,
+                          color: statusColor.text,
+                          border: `1px solid ${statusColor.border}`,
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {member.status}
+                        </span>
+                        {canResend && (
+                          <button
+                            className="ed-btn ed-btn-outline ed-btn-sm"
+                            style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', borderColor: '#6d28d9', color: '#6d28d9' }}
+                            title={`Resend invitation email to ${member.email}`}
+                            disabled={isResending === member.email}
+                            onClick={() => handleResendInvite(member.email)}
+                          >
+                            <RefreshCcw size={12} style={{ animation: isResending === member.email ? 'spin 1s linear infinite' : 'none' }} />
+                            {isResending === member.email ? 'Sending...' : 'Resend Invite'}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2596,13 +2733,39 @@ Preferred candidate profile:
 
             </div>
 
-            <div className="ed-drawer-footer">
-              <button className="ed-btn ed-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => alert(`Downloading resume ${selectedCandidate.resumeUrl}...`)}>
+            <div className="ed-drawer-footer" style={{ gap: '8px', display: 'flex', flexWrap: 'wrap' }}>
+              <button className="ed-btn ed-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => {
+                if (selectedCandidate.resumeUrl) {
+                  window.open(selectedCandidate.resumeUrl, '_blank');
+                } else {
+                  alert('No resume uploaded yet.');
+                }
+              }}>
                 <Download size={14} />
                 <span>Resume PDF</span>
               </button>
               
-              {!isScheduling && (
+              {['new', 'viewed'].includes(selectedCandidate.status) && (
+                <button 
+                  className="ed-btn ed-btn-outline" 
+                  style={{ borderColor: '#10b981', color: '#10b981', flex: 1 }}
+                  onClick={() => handleUpdateCandidateStatus(selectedCandidate.id, 'Shortlisted', 'Shortlisted by employer')}
+                >
+                  Shortlist
+                </button>
+              )}
+
+              {selectedCandidate.status !== 'rejected' && (
+                <button 
+                  className="ed-btn ed-btn-outline" 
+                  style={{ borderColor: '#ef4444', color: '#ef4444', flex: 1 }}
+                  onClick={() => handleUpdateCandidateStatus(selectedCandidate.id, 'Rejected', 'Rejected by employer')}
+                >
+                  Reject
+                </button>
+              )}
+
+              {!isScheduling && selectedCandidate.status !== 'rejected' && (
                 <button className="ed-btn ed-btn-primary" style={{ flex: 1 }} onClick={() => setIsScheduling(true)}>Schedule Interview</button>
               )}
             </div>
@@ -2611,6 +2774,587 @@ Preferred candidate profile:
         </div>
       )}
 
+      {/* ==========================================
+         SUB-COMPONENT: INVITE RECRUITER MODAL
+         ========================================== */}
+      {showInviteModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }} onClick={handleCloseInviteModal}>
+          <div style={{
+            width: '100%',
+            maxWidth: '520px',
+            background: 'var(--bg-card, #ffffff)',
+            borderRadius: '16px',
+            border: '1px solid var(--ed-border, #e2e8f0)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            padding: '28px',
+            position: 'relative'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Close Button */}
+            <button 
+              onClick={handleCloseInviteModal}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--ed-text-muted, #64748b)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '50%'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {!inviteSuccessInfo ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: 'rgba(109, 40, 217, 0.12)',
+                    color: 'var(--ed-primary, #6d28d9)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '19px', fontWeight: '800', margin: 0, color: 'var(--ed-text-primary, #0f172a)' }}>
+                      Invite Recruiter / Team Member
+                    </h3>
+                    <p style={{ fontSize: '12.5px', color: 'var(--ed-text-muted, #64748b)', margin: '2px 0 0' }}>
+                      Send an invitation with a temporary password to access your company portal.
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleInviteRecruiterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div className="ed-form-group">
+                    <label className="ed-label">Recruiter Full Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className="ed-input" 
+                      placeholder="e.g. Sarah Connor"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="ed-form-group">
+                    <label className="ed-label">Recruiter Email Address</label>
+                    <input 
+                      type="email" 
+                      required 
+                      className="ed-input" 
+                      placeholder="e.g. sarah.recruiter@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="ed-form-group">
+                    <label className="ed-label">Recruiter Access Role</label>
+                    <select 
+                      className="ed-select" 
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as any)}
+                    >
+                      <option value="Recruiter">Recruiter (Post jobs, manage candidates, schedule interviews)</option>
+                      <option value="Admin">Admin (Full access to billing, team management, company settings)</option>
+                      <option value="Interviewer">Interviewer (View assigned candidates & submit feedback)</option>
+                    </select>
+                  </div>
+
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    fontSize: '12.5px',
+                    color: '#0369a1',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px'
+                  }}>
+                    <ShieldCheck size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#0284c7' }} />
+                    <div>
+                      <strong>Temporary Password Generation:</strong> A secure temporary password will be generated automatically and emailed to the recruiter.
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button 
+                      type="button" 
+                      className="ed-btn ed-btn-ghost" 
+                      onClick={handleCloseInviteModal}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="ed-btn ed-btn-primary" 
+                      disabled={isInviting}
+                      style={{ minWidth: '140px', justifyContent: 'center' }}
+                    >
+                      {isInviting ? (
+                        <span className="spinner" style={{ width: '16px', height: '16px' }} />
+                      ) : (
+                        <>
+                          <Send size={15} style={{ marginRight: '6px' }} />
+                          <span>Send Invitation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: inviteSuccessInfo.emailSent === false ? '#fee2e2' : '#dcfce7',
+                  color: inviteSuccessInfo.emailSent === false ? '#b91c1c' : '#16a34a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
+                  {inviteSuccessInfo.emailSent === false
+                    ? <AlertTriangle size={32} />
+                    : <CheckCircle2 size={32} />}
+                </div>
+
+                <h3 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 6px', color: 'var(--ed-text-primary, #0f172a)' }}>
+                  {inviteSuccessInfo.emailSent === false
+                    ? 'Recruiter Account Created'
+                    : 'Invitation Email Dispatched!'}
+                </h3>
+                <p style={{ fontSize: '13.5px', color: 'var(--ed-text-secondary, #475569)', margin: '0 0 20px' }}>
+                  {inviteSuccessInfo.message}
+                </p>
+
+                {/* Warning banner when email failed */}
+                {inviteSuccessInfo.emailSent === false && inviteSuccessInfo.warning && (
+                  <div style={{
+                    background: '#fff7ed',
+                    border: '1px solid #fed7aa',
+                    borderRadius: '10px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    fontSize: '12.5px',
+                    color: '#92400e'
+                  }}>
+                    <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#d97706' }} />
+                    <div>
+                      <strong>⚠️ Email Not Sent:</strong> {inviteSuccessInfo.warning}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid var(--ed-border, #e2e8f0)',
+                  borderRadius: '12px',
+                  padding: '18px',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ed-text-muted, #64748b)' }}>Company Name:</span>
+                    <strong style={{ color: 'var(--ed-text-primary, #0f172a)' }}>{inviteSuccessInfo.companyName}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ed-text-muted, #64748b)' }}>Recruiter Name:</span>
+                    <strong style={{ color: 'var(--ed-text-primary, #0f172a)' }}>{inviteSuccessInfo.name}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ed-text-muted, #64748b)' }}>Recipient Email:</span>
+                    <strong style={{ color: 'var(--ed-text-primary, #0f172a)' }}>{inviteSuccessInfo.email}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ed-text-muted, #64748b)' }}>Assigned Role:</span>
+                    <strong style={{ color: 'var(--ed-primary, #6d28d9)' }}>{inviteSuccessInfo.role}</strong>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--ed-border, #e2e8f0)', paddingTop: '10px', marginTop: '2px' }}>
+                    <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--ed-text-muted, #64748b)', display: 'block', marginBottom: '6px' }}>
+                      GENERATED TEMPORARY PASSWORD
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <code style={{
+                        flex: 1,
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        background: '#ffffff',
+                        padding: '8px 12px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        color: '#0f172a',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {inviteSuccessInfo.tempPassword}
+                      </code>
+                      <button 
+                        className="ed-btn ed-btn-outline ed-btn-sm" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(inviteSuccessInfo.tempPassword);
+                          setCopiedPass(true);
+                          setTimeout(() => setCopiedPass(false), 2000);
+                        }}
+                        style={{ padding: '8px 12px' }}
+                      >
+                        <Copy size={14} style={{ marginRight: '4px' }} />
+                        <span>{copiedPass ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  className="ed-btn ed-btn-primary" 
+                  style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: '10px', justifyContent: 'center' }}
+                  onClick={handleCloseInviteModal}
+                >
+                  Done & Back to Recruiting Team
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+         SUB-COMPONENT: EMAIL OUTBOX & DISPATCH LOGS MODAL
+         ========================================== */}
+      {showOutboxModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setShowOutboxModal(false)}>
+          <div style={{
+            width: '100%',
+            maxWidth: '680px',
+            background: 'var(--bg-card, #ffffff)',
+            borderRadius: '16px',
+            border: '1px solid var(--ed-border, #e2e8f0)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            padding: '28px',
+            position: 'relative',
+            maxHeight: '85vh',
+            overflowY: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <button 
+              onClick={() => { setShowOutboxModal(false); setPreviewEmailItem(null); }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--ed-text-muted, #64748b)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '50%'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: 'rgba(2, 132, 199, 0.12)',
+                color: '#0284c7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Mail size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '19px', fontWeight: '800', margin: 0, color: 'var(--ed-text-primary, #0f172a)' }}>
+                  Email Outbox & Recruiter Dispatches
+                </h3>
+                <p style={{ fontSize: '12.5px', color: 'var(--ed-text-muted, #64748b)', margin: '2px 0 0' }}>
+                  Inspect dispatched recruiter emails, temporary passwords, and email rendering.
+                </p>
+              </div>
+            </div>
+
+            {previewEmailItem ? (
+              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '20px' }}>
+                <button 
+                  className="ed-btn ed-btn-ghost ed-btn-sm" 
+                  onClick={() => setPreviewEmailItem(null)}
+                  style={{ marginBottom: '16px' }}
+                >
+                  ← Back to Outbox List
+                </button>
+
+                <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '20px' }}>
+                  <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px', fontSize: '13px' }}>
+                    <div style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a', marginBottom: '6px' }}>
+                      Subject: Welcome to GetWorxs - Recruiter Account Invitation
+                    </div>
+                    <div><strong>From:</strong> GetWorxs Platform &lt;noreply@getworxs.com&gt;</div>
+                    <div><strong>To:</strong> {previewEmailItem.name} &lt;{previewEmailItem.email}&gt;</div>
+                    <div><strong>Company:</strong> {previewEmailItem.companyName || settings.companyName}</div>
+                  </div>
+
+                  <div style={{ fontFamily: 'Arial, sans-serif', color: '#0f172a', lineHeight: '1.6', fontSize: '14px' }}>
+                    <h3 style={{ color: '#6d28d9', margin: '0 0 10px' }}>Welcome to GetWorxs Global Talent Platform!</h3>
+                    <p>Hello <strong>{previewEmailItem.name}</strong>,</p>
+                    <p>You have been invited to join <strong>{previewEmailItem.companyName || settings.companyName}</strong> as a Recruiter / Talent Specialist on GetWorxs.</p>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '16px', borderRadius: '8px', margin: '16px 0' }}>
+                      <p style={{ margin: '0 0 8px 0' }}><strong>Registered Recruiter Email:</strong> {previewEmailItem.email}</p>
+                      <p style={{ margin: '0 0 8px 0' }}><strong>Temporary Password:</strong> <code style={{ background: '#ffffff', padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontWeight: 'bold' }}>{previewEmailItem.tempPassword || 'Recruiter@Temp123!'}</code></p>
+                      <p style={{ margin: 0 }}><strong>Sign-In Link:</strong> http://localhost:5173</p>
+                    </div>
+
+                    <p style={{ color: '#64748b', fontSize: '12px' }}>This temporary password expires in 7 days. Log in using the Sign In portal and select <strong>Recruiter</strong> role.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  fontSize: '12.5px',
+                  color: '#0369a1',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px'
+                }}>
+                  <Info size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#0284c7' }} />
+                  <div>
+                    <strong>Why standard emails aren't in external Gmail/Yahoo inboxes by default:</strong> Real external emails require live SMTP credentials (e.g. Gmail App Password, SendGrid, or AWS SES). Dispatched recruiter emails are logged below with temporary passwords for immediate testing.
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(() => {
+                    const invited = JSON.parse(localStorage.getItem('getworxs_invited_recruiters') || '[]');
+                    if (invited.length === 0 && team.length === 0) {
+                      return (
+                        <div style={{ textAlign: 'center', padding: '30px', color: 'var(--ed-text-muted, #64748b)', fontSize: '13px' }}>
+                          No recruiter invitation emails sent yet. Use "Invite Recruiter" button to send an invite!
+                        </div>
+                      );
+                    }
+                    const combined = [...invited];
+                    team.forEach(t => {
+                      if (!combined.some(c => c.email && c.email.toLowerCase() === t.email.toLowerCase())) {
+                        combined.push({
+                          name: t.name,
+                          email: t.email,
+                          companyName: settings.companyName,
+                          role: t.role,
+                          tempPassword: 'Recruiter@Temp123!'
+                        });
+                      }
+                    });
+
+                    return combined.map((item, idx) => (
+                      <div key={idx} style={{
+                        padding: '14px',
+                        background: '#f8fafc',
+                        border: '1px solid var(--ed-border, #e2e8f0)',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ed-text-primary, #0f172a)' }}>
+                            {item.name} &lt;{item.email}&gt;
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--ed-text-muted, #64748b)', marginTop: '2px' }}>
+                            Company: <strong>{item.companyName || settings.companyName}</strong> • Role: <strong>{item.role || 'Recruiter'}</strong>
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <ShieldCheck size={13} />
+                            <span>Temp Password: <code>{item.tempPassword || 'Recruiter@Temp123!'}</code></span>
+                          </div>
+                        </div>
+
+                        <button 
+                          className="ed-btn ed-btn-outline ed-btn-sm"
+                          onClick={() => setPreviewEmailItem(item)}
+                          style={{ fontSize: '12px' }}
+                        >
+                          Preview Email Inbox
+                        </button>
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--ed-border, #e2e8f0)', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ fontSize: '13.5px', fontWeight: '800', margin: '0 0 6px', color: 'var(--ed-text-primary, #0f172a)' }}>
+                    Want Real Physical Emails Sent to External Inboxes?
+                  </h4>
+                  <p style={{ fontSize: '12px', color: 'var(--ed-text-muted, #64748b)', margin: '0 0 10px' }}>
+                    To send real emails to Gmail / Outlook inboxes over the internet, add SMTP credentials in your backend <code>.env</code> file:
+                  </p>
+                  <code style={{ display: 'block', padding: '10px 12px', background: '#0f172a', color: '#38bdf8', borderRadius: '8px', fontSize: '11.5px' }}>
+                    SMTP_HOST="smtp.gmail.com"<br/>
+                    SMTP_PORT=587<br/>
+                    SMTP_USER="your-email@gmail.com"<br/>
+                    SMTP_PASSWORD="your-app-password"<br/>
+                    EMAILS_FROM_EMAIL="your-email@gmail.com"
+                  </code>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Modals */}
+      <SubscriptionPlansModal
+
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        onSelectPlan={(plan, currency) => {
+          setSelectedPlanForCheckout(plan);
+          setCheckoutCurrency(currency);
+          setShowPlansModal(false);
+          setShowCheckoutModal(true);
+        }}
+        currencyCode={checkoutCurrency}
+        reasonMessage={!accessStatus.is_dashboard_unlocked ? accessStatus.message : undefined}
+        isExpired={accessStatus.subscription_status === 'EXPIRED'}
+      />
+
+      <SubscriptionCheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        plan={selectedPlanForCheckout}
+        currency={checkoutCurrency}
+        onPaymentSuccess={(subData) => {
+          setShowCheckoutModal(false);
+          setAccessStatus(subData);
+        }}
+      />
+
+      {showRecruiterLimitModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #f1f5f9',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: '#fff7ed',
+              border: '2px solid #ffedd5',
+              color: '#ea580c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px auto'
+            }}>
+              <AlertTriangle size={32} />
+            </div>
+            
+            <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px 0' }}>
+              Recruiter Seat Limit Reached
+            </h3>
+            
+            <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', margin: '0 0 24px 0' }}>
+              Your current subscription plan has reached its recruiter seat limit. Upgrade your plan to invite more team members.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                className="ed-btn ed-btn-primary"
+                style={{ width: '100%', background: '#6366f1', color: '#ffffff', fontWeight: '700', padding: '12px' }}
+                onClick={() => {
+                  setShowRecruiterLimitModal(false);
+                  setActiveTab('billing');
+                }}
+              >
+                Upgrade Plan
+              </button>
+              
+              <button
+                type="button"
+                className="ed-btn ed-btn-ghost"
+                style={{ width: '100%', color: '#64748b', fontWeight: '700', padding: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                onClick={() => setShowRecruiterLimitModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
+
+

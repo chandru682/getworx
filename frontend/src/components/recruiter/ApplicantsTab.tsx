@@ -278,8 +278,8 @@ export const ApplicantsTab: React.FC<ApplicantsTabProps> = ({
             ) : (
               <div className="empty-results-crm">
                 <AlertCircle size={48} />
-                <h3>No candidates match your criteria</h3>
-                <p>Try clearing some skills filters or reducing the AI Match score threshold.</p>
+                <h3>No applications received.</h3>
+                <p>Applications submitted by job seekers will appear here.</p>
               </div>
             )}
           </div>

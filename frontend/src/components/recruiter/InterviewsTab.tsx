@@ -14,6 +14,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import type { Interview, Candidate } from './types';
+import { InterviewAPI } from '../../utils/api';
 
 interface InterviewsTabProps {
   interviews: Interview[];
@@ -52,7 +53,7 @@ export const InterviewsTab: React.FC<InterviewsTabProps> = ({
   const filteredInterviews = interviews.filter(i => i.status === activeTab);
   const selectedInterview = interviews.find(i => i.id === selectedInterviewId) || filteredInterviews[0];
 
-  const handleScheduleSubmit = (e: React.FormEvent) => {
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!candidateName || !date || !time) {
       alert('Please fill out all fields.');
@@ -60,7 +61,27 @@ export const InterviewsTab: React.FC<InterviewsTabProps> = ({
     }
 
     const matchedCand = candidates.find(c => c.name.toLowerCase().includes(candidateName.toLowerCase()));
-    
+    const scheduledDateTime = new Date(`${date}T${time}:00Z`).toISOString();
+
+    const meetingLink = meetingType === 'google' ? 'https://meet.google.com/xyz-abc' : meetingType === 'zoom' ? 'https://zoom.us/j/1234' : 'https://teams.microsoft.com/l/meet';
+
+    try {
+      if (matchedCand && (matchedCand as any).applicationId) {
+        await InterviewAPI.schedule({
+          application_id: Number((matchedCand as any).applicationId),
+          interview_type: type,
+          interview_mode: 'online',
+          scheduled_at: scheduledDateTime,
+          duration_minutes: 45,
+          interviewer_name: panelMembers || 'Recruiting Team Lead',
+          meeting_link: meetingLink,
+          notes: 'Corporate technical interview round.'
+        });
+      }
+    } catch (err: any) {
+      console.warn('Backend interview schedule failed, continuing local update:', err);
+    }
+
     const newInt: Interview = {
       id: `int-${Date.now()}`,
       candidateId: matchedCand?.id || 'cand-unknown',
@@ -69,7 +90,7 @@ export const InterviewsTab: React.FC<InterviewsTabProps> = ({
       date,
       time,
       type,
-      meetingLink: meetingType === 'google' ? 'https://meet.google.com/xyz-abc' : meetingType === 'zoom' ? 'https://zoom.us/j/1234' : 'https://teams.microsoft.com/l/meet',
+      meetingLink: meetingLink,
       linkType: meetingType,
       panel: panelMembers ? panelMembers.split(',').map(m => m.trim()) : ['Sarah Connor'],
       status: 'upcoming'
@@ -87,9 +108,24 @@ export const InterviewsTab: React.FC<InterviewsTabProps> = ({
     setPanelMembers('');
   };
 
-  const handleSaveFeedback = (e: React.FormEvent) => {
+  const handleSaveFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedInterview) return;
+
+    try {
+      if (!selectedInterview.id.startsWith('int-')) {
+        await InterviewAPI.submitFeedback(Number(selectedInterview.id), {
+          technical_rating: ratingVal || 4,
+          communication_rating: ratingVal || 4,
+          behavioral_rating: ratingVal || 4,
+          overall_rating: ratingVal || 4,
+          recommendation: ratingVal >= 4 ? 'strong_hire' : ratingVal >= 3 ? 'hire' : 'no_hire',
+          comments: feedbackText
+        });
+      }
+    } catch (err: any) {
+      console.warn('Backend feedback submission error:', err);
+    }
 
     onUpdateInterview(selectedInterview.id, {
       feedback: feedbackText,

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { 
   Star, 
   MapPin, 
@@ -50,6 +52,19 @@ export interface Job {
   jobStatus?: string[];
   benefits?: string[];
   aiMatchScore?: number;
+  screening_questions?: ScreeningQuestion[];
+  created_at?: string;
+}
+
+export interface ScreeningQuestion {
+  id: number;
+  question_text: string;
+  question_type: string;
+  options_json?: string;
+  is_mandatory: boolean;
+  is_knockout: boolean;
+  preferred_answer?: string;
+  display_order: number;
 }
 
 interface JobCardProps {
@@ -57,32 +72,55 @@ interface JobCardProps {
   currencyCode?: CurrencyCode;
   onApplySuccess?: (jobId: string) => void;
   isBookmarked?: boolean;
-  onBookmarkToggle?: (e: React.MouseEvent) => void;
+  onBookmarkToggle?: () => void;
+  hasApplied?: boolean;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ 
+export const JobCard: React.FC<JobCardProps> = memo(({ 
   job, 
   currencyCode = 'USD', 
-  onApplySuccess,
+  onApplySuccess: _onApplySuccess,
   isBookmarked = false,
-  onBookmarkToggle
-}) => {
-  const [applied, setApplied] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
+  onBookmarkToggle,
+  hasApplied = false
+}: JobCardProps) => {
+  const navigate = useNavigate();
+  const [applied, setApplied] = useState(hasApplied);
 
-  const handleApply = (e: React.MouseEvent) => {
+  useEffect(() => {
+    setApplied(hasApplied);
+  }, [hasApplied]);
+
+  // Decode role from JWT payload — avoids localStorage role key which is never written
+  const getTokenRole = useCallback((): string | null => {
+    try {
+      const token = localStorage.getItem('getworxs_access_token');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return (payload.role || payload.user_role || '').toUpperCase();
+    } catch { return null; }
+  }, []);
+
+  const handleApplyClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (applied) return;
-    
-    setIsApplying(true);
-    setTimeout(() => {
-      setIsApplying(false);
-      setApplied(true);
-      if (onApplySuccess) {
-        onApplySuccess(job.id);
-      }
-    }, 700);
-  };
+
+    const token = localStorage.getItem('getworxs_access_token');
+    if (!token) {
+      alert('Please log in to apply for jobs.');
+      return;
+    }
+
+    const role = getTokenRole();
+    if (role && role !== 'CANDIDATE') {
+      alert('Only Candidate accounts can apply for jobs.');
+      return;
+    }
+
+    // Navigate to dedicated full-page apply route — zero overlay, preserves history
+    navigate(`/candidate/jobs/${job.id}/apply`);
+  }, [applied, job.id, getTokenRole, navigate]);
+
 
   const getInitials = (name: string) => {
     return name
@@ -129,83 +167,85 @@ export const JobCard: React.FC<JobCardProps> = ({
   };
 
   // Compute dynamic salary string if numeric values are present
-  const displaySalary = job.minSalaryUSD 
+  const displaySalary = job.budget || (job.minSalaryUSD 
     ? formatSalaryRange(job.minSalaryUSD, job.maxSalaryUSD || null, job.jobType, currencyCode)
-    : job.budget;
+    : 'Competitive');
 
   return (
     <div className="job-card">
-      {/* Global Product Header */}
-      <div className="job-header">
-        <div className="job-meta-left">
-          <div 
-            className="client-logo"
-            style={{ 
-              background: getAvatarGradient(job.clientName), 
-              color: '#ffffff',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              border: 'none',
-              fontWeight: '700',
-              fontSize: '15px'
-            }}
-          >
-            {getInitials(job.clientName)}
-          </div>
-          <div className="job-title-wrapper">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 className="job-title">{job.title}</h3>
-              {job.countryFlag && (
-                <span style={{ fontSize: '16px' }} title={`Located in ${job.clientLocation}`}>
-                  {job.countryFlag}
-                </span>
-              )}
-            </div>
+      {/* Redesigned Clean Header Row */}
+      <div className="job-card-top-row">
+        <div 
+          className="client-logo"
+          style={{ 
+            background: getAvatarGradient(job.clientName), 
+            color: '#ffffff',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+            border: 'none',
+            fontWeight: '700',
+            fontSize: '15px'
+          }}
+        >
+          {getInitials(job.clientName)}
+        </div>
 
-            <div className="client-info">
-              <span className="client-name">{job.clientName}</span>
-              <span className="info-dot">•</span>
-              <div className="client-rating">
-                <Star size={13} fill="#f59e0b" style={{ color: '#f59e0b' }} />
-                <span>{job.clientRating.toFixed(1)}</span>
-              </div>
-              <span className="info-dot">•</span>
-              <span className="client-location">
-                <MapPin size={13} />
-                {job.clientLocation}
+        <div className="job-title-block">
+          <div className="job-title-row">
+            <h3 className="job-title">{job.title}</h3>
+            {job.countryFlag && (
+              <span style={{ fontSize: '15px' }} title={`Located in ${job.clientLocation}`}>
+                {job.countryFlag}
               </span>
+            )}
+          </div>
+
+          <div className="client-info">
+            <span className="client-name">{job.clientName}</span>
+            <span className="info-dot">•</span>
+            <div className="client-rating">
+              <Star size={13} fill="#f59e0b" style={{ color: '#f59e0b' }} />
+              <span>{job.clientRating.toFixed(1)}</span>
             </div>
+            <span className="info-dot">•</span>
+            <span className="client-location">
+              <MapPin size={13} />
+              {job.clientLocation}
+            </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-          <div className="job-budget">
-            <span className="budget-amount">{displaySalary}</span>
-            <span className="budget-type">{job.jobType}</span>
-          </div>
-          {onBookmarkToggle && (
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onBookmarkToggle(e);
-              }}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: isBookmarked ? '#ef4444' : 'var(--text-muted)', 
-                cursor: 'pointer', 
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-                marginTop: '2px'
-              }}
-              title={isBookmarked ? "Remove Bookmark" : "Bookmark Job"}
-            >
-              <Bookmark size={20} fill={isBookmarked ? "#ef4444" : "none"} />
-            </button>
-          )}
-        </div>
+        {onBookmarkToggle && (
+          <button 
+            className="job-bookmark-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBookmarkToggle();
+            }}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: isBookmarked ? '#ef4444' : 'var(--text-muted)', 
+              cursor: 'pointer', 
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              flexShrink: 0
+            }}
+            title={isBookmarked ? "Remove Bookmark" : "Bookmark Job"}
+          >
+            <Bookmark size={19} fill={isBookmarked ? "#ef4444" : "none"} />
+          </button>
+        )}
+      </div>
+
+      {/* Compact Executive Salary & Employment Type Pill Tag Row */}
+      <div className="job-salary-highlight-row">
+        <span className="salary-amount-pill">
+          {displaySalary}
+        </span>
+        <span className="job-type-pill">{job.jobType}</span>
       </div>
 
       <p className="job-description">{job.description}</p>
@@ -285,12 +325,9 @@ export const JobCard: React.FC<JobCardProps> = ({
         
         <button 
           className={`btn-apply ${applied ? 'applied' : ''}`}
-          onClick={handleApply}
-          disabled={isApplying}
+          onClick={handleApplyClick}
         >
-          {isApplying ? (
-            <span className="spinner" />
-          ) : applied ? (
+          {applied ? (
             <>
               <CheckCircle size={15} />
               <span>Applied</span>
@@ -302,4 +339,4 @@ export const JobCard: React.FC<JobCardProps> = ({
       </div>
     </div>
   );
-};
+});

@@ -29,11 +29,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'India',
     countryCode: 'in',
     region: 'sa',
-    avgSalaryUSD: 55000,
-    openings: 2400,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Node.js', 'Python', 'AWS'],
-    topCompanies: ['Google', 'Microsoft', 'Amazon'],
-    growth: '+28% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-mumbai',
@@ -41,11 +41,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'India',
     countryCode: 'in',
     region: 'sa',
-    avgSalaryUSD: 52000,
-    openings: 1800,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'TypeScript', 'Node.js', 'AWS'],
-    topCompanies: ['TCS', 'HDFC Bank', 'Reliance'],
-    growth: '+22% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-delhi',
@@ -53,11 +53,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'India',
     countryCode: 'in',
     region: 'sa',
-    avgSalaryUSD: 48000,
-    openings: 1550,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['Python', 'Django', 'React', 'AWS'],
-    topCompanies: ['Paytm', 'Zomato', 'MakeMyTrip'],
-    growth: '+20% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   // Middle East
   {
@@ -66,11 +66,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'United Arab Emirates',
     countryCode: 'ae',
     region: 'mea',
-    avgSalaryUSD: 140000,
-    openings: 430,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Node.js', 'Python', 'Docker'],
-    topCompanies: ['Binance', 'Careem', 'Emirates'],
-    growth: '+25% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-abudhabi',
@@ -78,11 +78,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'United Arab Emirates',
     countryCode: 'ae',
     region: 'mea',
-    avgSalaryUSD: 135000,
-    openings: 280,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['Python', 'PyTorch', 'AWS', 'Docker'],
-    topCompanies: ['G42', 'ADIA', 'Etisalat'],
-    growth: '+18% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   // North America
   {
@@ -91,11 +91,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'United States',
     countryCode: 'us',
     region: 'na',
-    avgSalaryUSD: 165000,
-    openings: 1450,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Node.js', 'Python', 'AWS'],
-    topCompanies: ['Google', 'Microsoft', 'Amazon'],
-    growth: '+20% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-ny',
@@ -103,11 +103,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'United States',
     countryCode: 'us',
     region: 'na',
-    avgSalaryUSD: 155000,
-    openings: 1200,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'TypeScript', 'Java', 'AWS'],
-    topCompanies: ['JPMorgan', 'Goldman Sachs', 'Morgan Stanley'],
-    growth: '+15% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-toronto',
@@ -115,11 +115,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Canada',
     countryCode: 'ca',
     region: 'na',
-    avgSalaryUSD: 115000,
-    openings: 620,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Ruby', 'Node.js', 'AWS'],
-    topCompanies: ['Shopify', 'RBC', 'TD Bank'],
-    growth: '+18% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   // Europe
   {
@@ -128,11 +128,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'United Kingdom',
     countryCode: 'gb',
     region: 'eu',
-    avgSalaryUSD: 105000,
-    openings: 980,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'TypeScript', 'Node.js', 'Kubernetes'],
-    topCompanies: ['Barclays', 'HSBC', 'Revolut'],
-    growth: '+16% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-berlin',
@@ -140,11 +140,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Germany',
     countryCode: 'de',
     region: 'eu',
-    avgSalaryUSD: 95000,
-    openings: 540,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['Golang', 'React', 'Docker', 'Kubernetes'],
-    topCompanies: ['Zalando', 'N26', 'Delivery Hero'],
-    growth: '+14% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   // Asia Pacific
   {
@@ -153,11 +153,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Singapore',
     countryCode: 'sg',
     region: 'ap',
-    avgSalaryUSD: 120000,
-    openings: 480,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Python', 'Golang', 'AWS'],
-    topCompanies: ['Grab', 'DBS Bank', 'Sea Group'],
-    growth: '+22% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-tokyo',
@@ -165,11 +165,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Japan',
     countryCode: 'jp',
     region: 'ap',
-    avgSalaryUSD: 85000,
-    openings: 310,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['Python', 'C++', 'IoT', 'Docker'],
-    topCompanies: ['Sony', 'Toyota', 'SoftBank'],
-    growth: '+12% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   // Australia
   {
@@ -178,11 +178,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Australia',
     countryCode: 'au',
     region: 'aus',
-    avgSalaryUSD: 110000,
-    openings: 420,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'TypeScript', 'AWS', 'Node.js'],
-    topCompanies: ['Atlassian', 'Canva', 'Macquarie'],
-    growth: '+15% YoY'
+    topCompanies: [],
+    growth: '0%'
   },
   {
     id: 'hub-melbourne',
@@ -190,11 +190,11 @@ const GLOBAL_HUBS: HubInfo[] = [
     country: 'Australia',
     countryCode: 'au',
     region: 'aus',
-    avgSalaryUSD: 105000,
-    openings: 380,
+    avgSalaryUSD: 0,
+    openings: 0,
     topTech: ['React', 'Node.js', 'AWS', 'Python'],
-    topCompanies: ['Telstra', 'ANZ Bank', 'BHP'],
-    growth: '+13% YoY'
+    topCompanies: [],
+    growth: '0%'
   }
 ];
 

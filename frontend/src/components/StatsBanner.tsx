@@ -66,16 +66,26 @@ function CountUp({ end, duration = 2000, decimals = 0, suffix = '' }: CountUpPro
 
 interface StatsBannerProps {
   activeLang: LangCode;
+  liveJobsCount?: number;
+  companiesCount?: number;
+  countriesCount?: number;
+  candidatesCount?: number;
 }
 
-export function StatsBanner({ activeLang }: StatsBannerProps) {
+export function StatsBanner({ 
+  activeLang,
+  liveJobsCount = 0,
+  companiesCount = 0,
+  countriesCount = 0,
+  candidatesCount = 0
+}: StatsBannerProps) {
   const stats = [
     {
       key: 'live_jobs',
       icon: Briefcase,
-      endValue: 12450,
+      endValue: liveJobsCount,
       decimals: 0,
-      suffix: '+',
+      suffix: liveJobsCount > 0 ? '+' : '',
       themeClass: 'purple-theme',
       styles: {
         '--icon-bg': 'var(--tag-purple-bg)',
@@ -87,9 +97,9 @@ export function StatsBanner({ activeLang }: StatsBannerProps) {
     {
       key: 'hiring_companies',
       icon: Building2,
-      endValue: 2350,
+      endValue: companiesCount,
       decimals: 0,
-      suffix: '+',
+      suffix: companiesCount > 0 ? '+' : '',
       themeClass: 'cyan-theme',
       styles: {
         '--icon-bg': 'var(--tag-cyan-bg)',
@@ -101,9 +111,9 @@ export function StatsBanner({ activeLang }: StatsBannerProps) {
     {
       key: 'countries',
       icon: Globe,
-      endValue: 75,
+      endValue: countriesCount,
       decimals: 0,
-      suffix: '+',
+      suffix: countriesCount > 0 ? '+' : '',
       themeClass: 'amber-theme',
       styles: {
         '--icon-bg': 'var(--tag-amber-bg)',
@@ -115,9 +125,9 @@ export function StatsBanner({ activeLang }: StatsBannerProps) {
     {
       key: 'registered_professionals',
       icon: Users,
-      endValue: 1.2,
-      decimals: 1,
-      suffix: 'M+',
+      endValue: candidatesCount,
+      decimals: 0,
+      suffix: candidatesCount > 0 ? '+' : '',
       themeClass: 'emerald-theme',
       styles: {
         '--icon-bg': 'var(--tag-emerald-bg)',

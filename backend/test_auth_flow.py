@@ -45,13 +45,13 @@ async def run_auth_tests():
             "name": "Sarah Connor",
             "email": "sarah.connor@example.com",
             "password": "SecurePassword123!",
-            "role": "RECRUITER"
+            "role": "CANDIDATE"
         }
         res = await client.post("/api/v1/auth/register", json=reg_payload)
         assert res.status_code == 201, f"Registration failed: {res.text}"
         data = res.json()["data"]
         assert data["email"] == "sarah.connor@example.com"
-        assert data["role"] == "RECRUITER"
+        assert data["role"] == "CANDIDATE"
         print("  - POST /api/v1/auth/register (Success) passed")
 
         # 3. User Registration (Duplicate Email Error)
