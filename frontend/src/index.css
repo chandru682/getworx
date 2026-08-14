@@ -3986,11 +3986,12 @@ body.dark .currency-select option {
   position: relative;
   width: 100%;
   display: block;
+  height: auto;
 }
 
 .journey-img {
   width: 100%;
-  height: auto;
+  /* height: 600px; */
   display: block;
   user-select: none;
   pointer-events: none;
