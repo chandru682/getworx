@@ -3893,6 +3893,487 @@ body.dark .naukri-profile-card {
 }
 
 /* ==========================================================================
+   Career Journey Redesign Banner Styles
+   ========================================================================== */
+
+.career-journey-section {
+  position: relative;
+  width: 100%;
+  margin-top: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.career-journey-viewport {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.07) 0%, rgba(2, 132, 199, 0.06) 50%, rgba(245, 243, 255, 0.6) 100%);
+}
+
+body.dark .career-journey-viewport {
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.2) 0%, rgba(2, 132, 199, 0.15) 50%, rgba(17, 16, 38, 0.9) 100%);
+}
+
+.hero-search-overlay {
+  position: relative;
+  width: 100%;
+  padding: 40px 24px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+}
+
+.hero-currency-container {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  pointer-events: auto;
+}
+
+body.dark .hero-currency-container {
+  background: rgba(30, 27, 75, 0.95);
+  border-color: rgba(109, 40, 217, 0.2);
+}
+
+.currency-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark .currency-label {
+  color: #a78bfa;
+}
+
+.currency-select {
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e1b4b;
+  cursor: pointer;
+  outline: none;
+  padding-right: 4px;
+}
+
+body.dark .currency-select {
+  color: #ffffff;
+}
+
+body.dark .currency-select option {
+  background: #111026;
+  color: #ffffff;
+}
+
+.career-journey-graphic {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+.journey-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.journey-svg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.journey-step-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 3;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.journey-step-node:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.journey-step-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--step-color, var(--color-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 0 0 4px rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.journey-step-node:hover .journey-step-circle {
+  box-shadow: 0 10px 24px var(--step-shadow, rgba(109, 40, 217, 0.25)), 0 0 0 6px rgba(255, 255, 255, 0.9);
+  background: var(--step-hover-bg, #f5f3ff);
+}
+
+.journey-step-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--step-color, var(--color-primary));
+  transition: transform 0.2s ease;
+}
+
+.journey-step-node:hover .journey-step-icon {
+  transform: scale(1.1);
+}
+
+.journey-step-label-container {
+  margin-top: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 6px 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  width: max-content;
+  max-width: 160px;
+}
+
+body.dark .journey-step-label-container {
+  background: rgba(30, 27, 75, 0.95);
+  border-color: rgba(109, 40, 217, 0.2);
+}
+
+.journey-step-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1e1b4b;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+body.dark .journey-step-title {
+  color: #ffffff;
+}
+
+.journey-step-desc {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+body.dark .journey-step-desc {
+  color: #cbd5e1;
+}
+
+/* Step-specific custom label placements */
+.journey-step-node.step-7 {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.journey-step-node.step-7 .journey-step-label-container {
+  margin-top: 0;
+  text-align: left;
+  align-items: flex-start;
+  max-width: 180px;
+}
+
+.journey-step-node.step-1 .journey-step-label-container {
+  display: none; /* Just a ? icon above him, matching the image */
+}
+
+/* Trust Metric Bar */
+.journey-bottom-trustbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 16px 32px;
+  gap: 20px;
+}
+
+body.dark .journey-bottom-trustbar {
+  background: #111026;
+  border-top-color: rgba(109, 40, 217, 0.15);
+}
+
+.trustbar-metrics {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-around;
+}
+
+.trustbar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  flex: 1;
+}
+
+.trustbar-item:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
+}
+
+body.dark .trustbar-item:not(:last-child) {
+  border-right-color: rgba(109, 40, 217, 0.15);
+}
+
+.trustbar-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f5f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d28d9;
+  flex-shrink: 0;
+}
+
+body.dark .trustbar-icon-wrap {
+  background: rgba(109, 40, 217, 0.15);
+  color: #a78bfa;
+}
+
+.trustbar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trustbar-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+body.dark .trustbar-title {
+  color: #ffffff;
+}
+
+.trustbar-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+body.dark .trustbar-desc {
+  color: #cbd5e1;
+}
+
+.trustbar-logo-wrap {
+  display: flex;
+  align-items: center;
+  padding-left: 24px;
+  border-left: 2px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+body.dark .trustbar-logo-wrap {
+  border-left-color: rgba(109, 40, 217, 0.15);
+}
+
+.trustbar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trustbar-brand-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trustbar-gv-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(109, 40, 217, 0.2);
+}
+
+.trustbar-brand-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #1e1b4b;
+  letter-spacing: -0.5px;
+}
+
+body.dark .trustbar-brand-name {
+  color: #ffffff;
+}
+
+.trustbar-brand-slogan {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+body.dark .trustbar-brand-slogan {
+  color: #a78bfa;
+}
+
+/* Redesigned Heading Color Styles */
+.naukri-hero-heading-accent {
+  background: linear-gradient(135deg, #6d28d9 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* RESPONSIVE HERO BANNER */
+@media (max-width: 1024px) {
+  /* Graphic scales automatically with the image */
+  
+  .journey-step-label-container {
+    max-width: 120px;
+    padding: 4px 8px;
+  }
+  
+  .journey-step-title {
+    font-size: 10px;
+  }
+  
+  .journey-step-desc {
+    font-size: 8.5px;
+  }
+  
+  .trustbar-item {
+    padding: 0 8px;
+  }
+  
+  .trustbar-title {
+    font-size: 12px;
+  }
+  
+  .trustbar-desc {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .career-journey-viewport {
+    border-radius: 0;
+  }
+
+  .hero-search-overlay {
+    padding: 24px 16px;
+  }
+  
+  .hero-currency-container {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+  }
+
+  /* Graphic scales automatically with the image */
+  
+  .journey-step-circle {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .journey-step-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .journey-step-label-container {
+    display: none !important; /* Hide labels on mobile to avoid overlap */
+  }
+  
+  /* Re-enable label display for step 7 as pill badge on mobile */
+  .journey-step-node.step-7 .journey-step-label-container {
+    display: flex !important;
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 4px 8px;
+    max-width: 120px;
+    text-align: center;
+    align-items: center;
+  }
+
+  .journey-bottom-trustbar {
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .trustbar-metrics {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .trustbar-item {
+    width: 100%;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    justify-content: flex-start;
+  }
+
+  body.dark .trustbar-item {
+    border-bottom-color: rgba(109, 40, 217, 0.15);
+  }
+
+  .trustbar-logo-wrap {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    justify-content: center;
+    margin-top: 8px;
+  }
+}
+
+
+/* ==========================================================================
    GetWorxs Global Executive Footer Styles
    ========================================================================== */
 

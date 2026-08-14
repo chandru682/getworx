@@ -8,11 +8,23 @@ import {
   Briefcase, 
   TrendingUp,
   ChevronRight,
-  Star
+  Star,
+  HelpCircle,
+  FileText,
+  BookOpen,
+  Users,
+  CheckCircle,
+  Trophy,
+  ShieldCheck,
+  Target,
+  GraduationCap,
+  LineChart,
+  Megaphone
 } from 'lucide-react';
 import { JobCard, type Job } from './JobCard';
 import { type CurrencyCode, CURRENCIES } from '../utils/currency';
 import { MOCK_GLOBAL_COMPANIES } from '../data/jobsData';
+import careerJourneyBg from '../assets/career_journey.png';
 
 import { Footer } from './Footer';
 
@@ -115,141 +127,283 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
   }, [jobsList]);
 
   const popularSearches = [
-    { label: 'Remote Jobs', query: 'Remote' },
-    { label: 'MNCs', query: 'MNC' },
-    { label: 'Software & Tech', query: 'Software' },
-    { label: 'Startup Jobs', query: 'Startup' },
-    { label: 'AI & Data', query: 'AI' },
-    { label: 'Marketing', query: 'Marketing' }
+    { label: 'Remote Jobs', query: 'Remote', icon: <Search size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> },
+    { label: 'MNCs', query: 'MNC', icon: <FileText size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> },
+    { label: 'Software & Tech', query: 'Software', icon: <GraduationCap size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> },
+    { label: 'Startup Jobs', query: 'Startup', icon: <Sparkles size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> },
+    { label: 'AI & Data', query: 'AI', icon: <LineChart size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> },
+    { label: 'Marketing', query: 'Marketing', icon: <Megaphone size={13} style={{ marginRight: '6px', opacity: 0.8 }} /> }
   ];
 
   return (
     <div className="candidate-home-wrapper">
-      {/* 1. HERO / SEARCH SECTION (Naukri.com Inspired 3-Field Search) */}
-      <section className="naukri-hero-section">
-        <div className="naukri-hero-backdrop" />
-        
-        {/* Floating Currency Selector */}
-        <div style={{ 
-          position: 'absolute', 
-          top: '16px', 
-          right: '24px', 
-          zIndex: 10, 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '6px', 
-          background: 'rgba(255, 255, 255, 0.95)', 
-          padding: '6px 12px', 
-          borderRadius: '20px', 
-          boxShadow: '0 4px 12px rgba(0,0,0,0.06)', 
-          border: '1px solid rgba(226, 232, 240, 0.8)' 
-        }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Currency:</span>
-          <select
-            value={activeCurrency}
-            onChange={(e) => setActiveCurrency(e.target.value as CurrencyCode)}
-            style={{ 
-              border: 'none', 
-              background: 'none', 
-              fontSize: '12px', 
-              fontWeight: 800, 
-              color: '#1E1B4B', 
-              cursor: 'pointer', 
-              outline: 'none', 
-              paddingRight: '4px' 
-            }}
-          >
-            {Object.values(CURRENCIES).map((curr) => (
-              <option key={curr.code} value={curr.code}>
-                {curr.flag} {curr.code} ({curr.symbol})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="naukri-hero-container">
-          <div className="naukri-hero-content">
-            <span className="naukri-hero-badge">
-              <Sparkles size={14} className="hero-sparkle-icon" />
-              <span>India's & Global #1 Job Platform</span>
-            </span>
-
-            <h1 className="naukri-hero-heading">
-              Find your dream job now
-            </h1>
-
-            <p className="naukri-hero-subheading">
-              500,000+ jobs from top verified companies around the world
-            </p>
-
-            {/* 3-Field Unified Search Bar (Naukri Style) */}
-            <form className="naukri-search-bar" onSubmit={handleFormSubmit}>
-              {/* Field 1: Skills / Designations / Companies */}
-              <div className="naukri-search-field">
-                <Search size={18} className="naukri-field-icon" />
-                <input 
-                  type="text"
-                  placeholder="Enter skills / designations / companies"
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  className="naukri-field-input"
-                />
-              </div>
-
-              <div className="naukri-field-divider" />
-
-              {/* Field 2: Select Experience */}
-              <div className="naukri-search-field">
-                <Briefcase size={18} className="naukri-field-icon" />
-                <select
-                  value={localExperience}
-                  onChange={(e) => setLocalExperience(e.target.value)}
-                  className="naukri-field-select"
-                >
-                  <option value="all">Select experience</option>
-                  <option value="fresher">Fresher (0 Yrs)</option>
-                  <option value="1-3">1 - 3 Yrs</option>
-                  <option value="3-5">3 - 5 Yrs</option>
-                  <option value="5-8">5 - 8 Yrs</option>
-                  <option value="8+">8+ Yrs</option>
-                </select>
-              </div>
-
-              <div className="naukri-field-divider" />
-
-              {/* Field 3: Enter Location */}
-              <div className="naukri-search-field">
-                <MapPin size={18} className="naukri-field-icon" />
-                <input 
-                  type="text"
-                  placeholder="Enter location / Remote"
-                  value={localLocation}
-                  onChange={(e) => setLocalLocation(e.target.value)}
-                  className="naukri-field-input"
-                />
-              </div>
-
-              <button type="submit" className="naukri-search-btn">
-                <span>Search</span>
-              </button>
-            </form>
-
-            {/* Collection Chips below search bar */}
-            <div className="naukri-collection-row">
-              {popularSearches.map(item => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className="naukri-collection-chip"
-                  onClick={() => {
-                    setLocalTitle(item.query);
-                    setSearchQuery(item.query);
-                    onSearchSubmit(item.query, localLocation, localExperience);
-                  }}
-                >
-                  {item.label}
-                </button>
+      {/* Redesigned Career Journey & Hero Unified Banner */}
+      <section className="career-journey-section">
+        <div className="career-journey-viewport">
+          {/* Floating Currency Selector */}
+          <div className="hero-currency-container">
+            <span className="currency-label">Currency:</span>
+            <select
+              value={activeCurrency}
+              onChange={(e) => setActiveCurrency(e.target.value as CurrencyCode)}
+              className="currency-select"
+            >
+              {Object.values(CURRENCIES).map((curr) => (
+                <option key={curr.code} value={curr.code}>
+                  {curr.flag} {curr.code} ({curr.symbol})
+                </option>
               ))}
+            </select>
+          </div>
+
+          {/* Unified Search and Hero Content */}
+          <div className="hero-search-overlay">
+            <div className="naukri-hero-container" style={{ pointerEvents: 'auto' }}>
+              <div className="naukri-hero-content">
+                <span className="naukri-hero-badge">
+                  <Sparkles size={14} className="hero-sparkle-icon" />
+                  <span>India's & Global #1 Job Platform</span>
+                </span>
+
+                <h1 className="naukri-hero-heading" style={{ fontSize: 'clamp(28px, 4vw, 48px)' }}>
+                  Find your <span className="naukri-hero-heading-accent">dream job</span> now
+                </h1>
+
+                <p className="naukri-hero-subheading" style={{ marginBottom: '24px', fontSize: 'clamp(14px, 1.2vw, 16px)' }}>
+                  500,000+ jobs from top verified companies around the world
+                </p>
+
+                {/* 3-Field Unified Search Bar (Naukri Style) */}
+                <form className="naukri-search-bar" onSubmit={handleFormSubmit} style={{ boxShadow: '0 10px 30px rgba(109, 40, 217, 0.12)' }}>
+                  {/* Field 1: Skills / Designations / Company */}
+                  <div className="naukri-search-field">
+                    <Search size={18} className="naukri-field-icon" />
+                    <input 
+                      type="text"
+                      placeholder="Enter skills / designations / company"
+                      value={localTitle}
+                      onChange={(e) => setLocalTitle(e.target.value)}
+                      className="naukri-field-input"
+                    />
+                  </div>
+
+                  <div className="naukri-field-divider" />
+
+                  {/* Field 2: Select Experience */}
+                  <div className="naukri-search-field">
+                    <Briefcase size={18} className="naukri-field-icon" />
+                    <select
+                      value={localExperience}
+                      onChange={(e) => setLocalExperience(e.target.value)}
+                      className="naukri-field-select"
+                    >
+                      <option value="all">Select experience</option>
+                      <option value="fresher">Fresher (0 Yrs)</option>
+                      <option value="1-3">1 - 3 Yrs</option>
+                      <option value="3-5">3 - 5 Yrs</option>
+                      <option value="5-8">5 - 8 Yrs</option>
+                      <option value="8+">8+ Yrs</option>
+                    </select>
+                  </div>
+
+                  <div className="naukri-field-divider" />
+
+                  {/* Field 3: Enter Location */}
+                  <div className="naukri-search-field">
+                    <MapPin size={18} className="naukri-field-icon" />
+                    <input 
+                      type="text"
+                      placeholder="Enter location / Remote"
+                      value={localLocation}
+                      onChange={(e) => setLocalLocation(e.target.value)}
+                      className="naukri-field-input"
+                    />
+                  </div>
+
+                  <button type="submit" className="naukri-search-btn">
+                    <span>Search</span>
+                  </button>
+                </form>
+
+                {/* Collection Chips below search bar */}
+                <div className="naukri-collection-row" style={{ marginTop: '20px' }}>
+                  {popularSearches.map(item => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className="naukri-collection-chip"
+                      style={{ display: 'inline-flex', alignItems: 'center' }}
+                      onClick={() => {
+                        setLocalTitle(item.query);
+                        setSearchQuery(item.query);
+                        onSearchSubmit(item.query, localLocation, localExperience);
+                      }}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Roadmap Graphic Container */}
+          <div className="career-journey-graphic">
+            {/* HTML Image Tag to ensure container height scales perfectly with the image aspect ratio */}
+            <img 
+              src={careerJourneyBg} 
+              alt="Career Journey Roadmap" 
+              className="journey-img" 
+            />
+
+            {/* SVG Curves connecting the steps dynamically */}
+            <svg 
+              className="journey-svg-overlay" 
+              viewBox="0 0 1000 320" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Step 1 to 2 */}
+              <path d="M 115 80 Q 182.5 96 250 112" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
+              {/* Step 2 to 3 */}
+              <path d="M 250 112 Q 309 104 368 96" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="5 5" />
+              {/* Step 3 to 4 */}
+              <path d="M 368 96 Q 424 88 480 80" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeDasharray="5 5" />
+              {/* Step 4 to 5 */}
+              <path d="M 480 80 Q 539 72 598 64" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
+              {/* Step 5 to 6 */}
+              <path d="M 598 64 Q 661 56 724 48" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="5 5" />
+              {/* Step 6 to 7 */}
+              <path d="M 724 48 Q 809.5 32 895 16" fill="none" stroke="#eab308" strokeWidth="2.5" strokeDasharray="5 5" />
+            </svg>
+
+            {/* Step 1 Node */}
+            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '25%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <HelpCircle className="journey-step-icon" />
+              </div>
+            </div>
+
+            {/* Step 2 Node */}
+            <div className="journey-step-node step-2" style={{ left: '25%', top: '35%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <Search className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">2. DISCOVER</span>
+                <span className="journey-step-desc">Explore Job Openings</span>
+              </div>
+            </div>
+
+            {/* Step 3 Node */}
+            <div className="journey-step-node step-3" style={{ left: '36.8%', top: '30%', '--step-color': '#10b981', '--step-shadow': 'rgba(16, 185, 129, 0.25)', '--step-hover-bg': '#ecfdf5' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <FileText className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">3. APPLY</span>
+                <span className="journey-step-desc">Submit Your Application</span>
+              </div>
+            </div>
+
+            {/* Step 4 Node */}
+            <div className="journey-step-node step-4" style={{ left: '48%', top: '25%', '--step-color': '#06b6d4', '--step-shadow': 'rgba(6, 182, 212, 0.25)', '--step-hover-bg': '#ecfeff' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <BookOpen className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">4. PREPARE</span>
+                <span className="journey-step-desc">Upskill & Get Ready</span>
+              </div>
+            </div>
+
+            {/* Step 5 Node */}
+            <div className="journey-step-node step-5" style={{ left: '59.8%', top: '20%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <Users className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">5. INTERVIEW</span>
+                <span className="journey-step-desc">Show Your Potential</span>
+              </div>
+            </div>
+
+            {/* Step 6 Node */}
+            <div className="journey-step-node step-6" style={{ left: '72.4%', top: '15%', '--step-color': '#f59e0b', '--step-shadow': 'rgba(245, 158, 11, 0.25)', '--step-hover-bg': '#fffbeb' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <CheckCircle className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">6. SELECTED</span>
+                <span className="journey-step-desc">You're the Right Fit!</span>
+              </div>
+            </div>
+
+            {/* Step 7 Node */}
+            <div className="journey-step-node step-7" style={{ left: '89.5%', top: '5%', '--step-color': '#eab308', '--step-shadow': 'rgba(234, 179, 8, 0.25)', '--step-hover-bg': '#fefce8' } as React.CSSProperties}>
+              <div className="journey-step-circle">
+                <Trophy className="journey-step-icon" />
+              </div>
+              <div className="journey-step-label-container">
+                <span className="journey-step-title">7. JOB ACHIEVED</span>
+                <span className="journey-step-desc">New Beginning, Bright Future!</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Trust Metrics Bar */}
+          <div className="journey-bottom-trustbar">
+            <div className="trustbar-metrics">
+              <div className="trustbar-item">
+                <div className="trustbar-icon-wrap">
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="trustbar-text">
+                  <span className="trustbar-title">Verified Companies</span>
+                  <span className="trustbar-desc">100% Trusted Partners</span>
+                </div>
+              </div>
+
+              <div className="trustbar-item">
+                <div className="trustbar-icon-wrap">
+                  <Target size={20} />
+                </div>
+                <div className="trustbar-text">
+                  <span className="trustbar-title">Right Opportunities</span>
+                  <span className="trustbar-desc">For Your Dream Career</span>
+                </div>
+              </div>
+
+              <div className="trustbar-item">
+                <div className="trustbar-icon-wrap">
+                  <GraduationCap size={20} />
+                </div>
+                <div className="trustbar-text">
+                  <span className="trustbar-title">Career Guidance</span>
+                  <span className="trustbar-desc">Expert Interview Coaching</span>
+                </div>
+              </div>
+
+              <div className="trustbar-item">
+                <div className="trustbar-icon-wrap">
+                  <LineChart size={20} />
+                </div>
+                <div className="trustbar-text">
+                  <span className="trustbar-title">Growth & Success</span>
+                  <span className="trustbar-desc">Achieve Your Global Goals</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="trustbar-logo-wrap">
+              <div className="trustbar-brand">
+                <div className="trustbar-brand-flex">
+                  <div className="trustbar-gv-icon">GV</div>
+                  <span className="trustbar-brand-name">GETWORX</span>
+                </div>
+                <span className="trustbar-brand-slogan">Your Journey. Our Mission.</span>
+              </div>
             </div>
           </div>
         </div>
