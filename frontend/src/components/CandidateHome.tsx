@@ -279,7 +279,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </svg>
 
             {/* Step 1 Node */}
-            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '51%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '48%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <HelpCircle className="journey-step-icon" />
               </div>
