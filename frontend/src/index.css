@@ -4101,22 +4101,8 @@ body.dark .journey-step-desc {
 }
 
 /* Step-specific custom label placements */
-.journey-step-node.step-7 {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
 
-.journey-step-node.step-7 .journey-step-label-container {
-  margin-top: 0;
-  text-align: left;
-  align-items: flex-start;
-  max-width: 180px;
-}
 
-.journey-step-node.step-1 .journey-step-label-container {
-  display: none; /* Just a ? icon above him, matching the image */
-}
 
 /* Trust Metric Bar */
 .journey-bottom-trustbar {
