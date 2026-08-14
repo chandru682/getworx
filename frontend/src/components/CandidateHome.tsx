@@ -265,28 +265,28 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
               xmlns="http://www.w3.org/2000/svg"
             >
               {/* Step 1 to 2 */}
-              <path d="M 115 80 Q 182.5 96 250 112" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 115 102 Q 182.5 118 250 134" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 2 to 3 */}
-              <path d="M 250 112 Q 309 104 368 96" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 250 134 Q 309 128 368 122" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 3 to 4 */}
-              <path d="M 368 96 Q 424 88 480 80" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 368 122 Q 424 115 480 109" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 4 to 5 */}
-              <path d="M 480 80 Q 539 72 598 64" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 480 109 Q 539 102 598 96" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 5 to 6 */}
-              <path d="M 598 64 Q 661 56 724 48" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 598 96 Q 661 89 724 83" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 6 to 7 */}
-              <path d="M 724 48 Q 809.5 32 895 16" fill="none" stroke="#eab308" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 724 83 Q 809.5 76 895 70" fill="none" stroke="#eab308" strokeWidth="2.5" strokeDasharray="5 5" />
             </svg>
 
             {/* Step 1 Node */}
-            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '25%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '32%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <HelpCircle className="journey-step-icon" />
               </div>
             </div>
 
             {/* Step 2 Node */}
-            <div className="journey-step-node step-2" style={{ left: '25%', top: '35%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+            <div className="journey-step-node step-2" style={{ left: '25%', top: '42%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <Search className="journey-step-icon" />
               </div>
@@ -297,7 +297,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </div>
 
             {/* Step 3 Node */}
-            <div className="journey-step-node step-3" style={{ left: '36.8%', top: '30%', '--step-color': '#10b981', '--step-shadow': 'rgba(16, 185, 129, 0.25)', '--step-hover-bg': '#ecfdf5' } as React.CSSProperties}>
+            <div className="journey-step-node step-3" style={{ left: '36.8%', top: '38%', '--step-color': '#10b981', '--step-shadow': 'rgba(16, 185, 129, 0.25)', '--step-hover-bg': '#ecfdf5' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <FileText className="journey-step-icon" />
               </div>
@@ -308,7 +308,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </div>
 
             {/* Step 4 Node */}
-            <div className="journey-step-node step-4" style={{ left: '48%', top: '25%', '--step-color': '#06b6d4', '--step-shadow': 'rgba(6, 182, 212, 0.25)', '--step-hover-bg': '#ecfeff' } as React.CSSProperties}>
+            <div className="journey-step-node step-4" style={{ left: '48%', top: '34%', '--step-color': '#06b6d4', '--step-shadow': 'rgba(6, 182, 212, 0.25)', '--step-hover-bg': '#ecfeff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <BookOpen className="journey-step-icon" />
               </div>
@@ -319,7 +319,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </div>
 
             {/* Step 5 Node */}
-            <div className="journey-step-node step-5" style={{ left: '59.8%', top: '20%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+            <div className="journey-step-node step-5" style={{ left: '59.8%', top: '30%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <Users className="journey-step-icon" />
               </div>
@@ -330,7 +330,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </div>
 
             {/* Step 6 Node */}
-            <div className="journey-step-node step-6" style={{ left: '72.4%', top: '15%', '--step-color': '#f59e0b', '--step-shadow': 'rgba(245, 158, 11, 0.25)', '--step-hover-bg': '#fffbeb' } as React.CSSProperties}>
+            <div className="journey-step-node step-6" style={{ left: '72.4%', top: '26%', '--step-color': '#f59e0b', '--step-shadow': 'rgba(245, 158, 11, 0.25)', '--step-hover-bg': '#fffbeb' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <CheckCircle className="journey-step-icon" />
               </div>
@@ -341,7 +341,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </div>
 
             {/* Step 7 Node */}
-            <div className="journey-step-node step-7" style={{ left: '89.5%', top: '5%', '--step-color': '#eab308', '--step-shadow': 'rgba(234, 179, 8, 0.25)', '--step-hover-bg': '#fefce8' } as React.CSSProperties}>
+            <div className="journey-step-node step-7" style={{ left: '89.5%', top: '22%', '--step-color': '#eab308', '--step-shadow': 'rgba(234, 179, 8, 0.25)', '--step-hover-bg': '#fefce8' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <Trophy className="journey-step-icon" />
               </div>

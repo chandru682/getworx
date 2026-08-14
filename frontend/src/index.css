@@ -4052,7 +4052,10 @@ body.dark .currency-select option {
 }
 
 .journey-step-label-container {
-  margin-top: 10px;
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -4065,6 +4068,7 @@ body.dark .currency-select option {
   border: 1px solid rgba(226, 232, 240, 0.8);
   width: max-content;
   max-width: 160px;
+  z-index: 4;
 }
 
 body.dark .journey-step-label-container {
