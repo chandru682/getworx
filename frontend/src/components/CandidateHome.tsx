@@ -265,7 +265,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
               xmlns="http://www.w3.org/2000/svg"
             >
               {/* Step 1 to 2 */}
-              <path d="M 115 268 Q 182.5 268 250 268" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
+              <path d="M 115 263 Q 182.5 265.5 250 268" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 2 to 3 */}
               <path d="M 250 268 Q 309 251.5 368 235" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="5 5" />
               {/* Step 3 to 4 */}
@@ -279,7 +279,7 @@ export const CandidateHome: React.FC<CandidateHomeProps> = ({
             </svg>
 
             {/* Step 1 Node */}
-            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '48%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
+            <div className="journey-step-node step-1" style={{ left: '11.5%', top: '47%', '--step-color': '#8b5cf6', '--step-shadow': 'rgba(139, 92, 246, 0.25)', '--step-hover-bg': '#f5f3ff' } as React.CSSProperties}>
               <div className="journey-step-circle">
                 <HelpCircle className="journey-step-icon" />
               </div>
